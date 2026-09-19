@@ -1,0 +1,14 @@
+# Vitis HLS Ignores
+Spikeface_HLS/solution*/
+Spikeface_HLS/solnfc*/
+
+# Vivado Ignores
+spikeface/*.cache/
+spikeface/*.hw/
+spikeface/*.ip_user_files/
+spikeface/*.runs/
+spikeface/*.sim/
+spikeface/*.gen/
+spikeface/*.xpr
+spikeface/*.log
+spikeface/*.jou

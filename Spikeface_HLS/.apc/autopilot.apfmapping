@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<autopilotfilemapping:AutoPilotFileMapping xmlns:autopilotfilemapping="www.autoesl.com/autopilotfilemapping">
+  <source>
+    <originFiles name="fc2_layer_axi.h" path="/home/pranavsai/Spikeface_HLS/fc2_layer_axi.h"/>
+    <originFiles name="fc2_layer_axi.cpp" path="/home/pranavsai/Spikeface_HLS/fc2_layer_axi.cpp"/>
+  </source>
+  <testbench>
+    <originFiles name="tb_fc2_layer_axi.cpp" path="/home/pranavsai/Spikeface_HLS/tb_fc2_layer_axi.cpp"/>
+  </testbench>
+</autopilotfilemapping:AutoPilotFileMapping>

@@ -1,0 +1,55 @@
+{
+   "ActiveEmotionalView":"Default View",
+   "Default View_ScaleFactor":"0.404499",
+   "Default View_TopLeft":"0,-858",
+   "ExpandedHierarchyInLayout":"",
+   "guistr":"# # String gsaved with Nlview 7.0r4  2019-12-20 bk=1.5203 VDI=41 GEI=36 GUI=JA:10.0 TLS
+#  -string -flagsOSRD
+preplace port DDR -pg 1 -lvl 13 -x 4420 -y 330 -defaultsOSRD
+preplace port FIXED_IO -pg 1 -lvl 13 -x 4420 -y 350 -defaultsOSRD
+preplace inst processing_system7_0 -pg 1 -lvl 12 -x 4170 -y 370 -defaultsOSRD
+preplace inst conv1_layer_axi_0 -pg 1 -lvl 4 -x 1290 -y 120 -defaultsOSRD
+preplace inst ps7_0_axi_periph -pg 1 -lvl 2 -x 550 -y 240 -defaultsOSRD
+preplace inst rst_ps7_0_50M -pg 1 -lvl 1 -x 210 -y 120 -defaultsOSRD
+preplace inst conv2_layer_axi_0 -pg 1 -lvl 6 -x 2000 -y 330 -defaultsOSRD
+preplace inst conv1_pool_axi_0 -pg 1 -lvl 5 -x 1660 -y 320 -defaultsOSRD
+preplace inst conv2_pool_axi_0 -pg 1 -lvl 7 -x 2350 -y 600 -defaultsOSRD
+preplace inst fc1_layer_axi_0 -pg 1 -lvl 8 -x 2710 -y 580 -defaultsOSRD
+preplace inst axi_dma_0 -pg 1 -lvl 3 -x 910 -y 520 -defaultsOSRD
+preplace inst smartconnect_0 -pg 1 -lvl 11 -x 3800 -y 510 -defaultsOSRD
+preplace inst axi_dma_1 -pg 1 -lvl 10 -x 3470 -y 370 -defaultsOSRD
+preplace inst smartconnect_1 -pg 1 -lvl 11 -x 3800 -y 370 -defaultsOSRD
+preplace inst xlconstant_0 -pg 1 -lvl 4 -x 1290 -y 300 -defaultsOSRD
+preplace inst fc2_layer_axi_0 -pg 1 -lvl 9 -x 3080 -y 360 -defaultsOSRD
+preplace netloc processing_system7_0_FCLK_CLK0 1 0 13 30 20 390 460 720 420 1110 420 1480 420 1830 590 2180 500 2530 430 2880 460 3290 470 3650 290 3940 490 4390
+preplace netloc processing_system7_0_FCLK_RESET0_N 1 0 13 20 10 NJ 10 NJ 10 NJ 10 NJ 10 NJ 10 NJ 10 NJ 10 NJ 10 NJ 10 NJ 10 NJ 10 4400
+preplace netloc rst_ps7_0_50M_peripheral_aresetn 1 1 10 400 470 730 430 1130 430 1490 430 1840 600 2160 480 2540 440 2890 470 3280 480 3660
+preplace netloc xlconstant_0_dout 1 4 3 1470 580 NJ 580 NJ
+preplace netloc axi_dma_0_M_AXIS_MM2S 1 3 1 1090 110n
+preplace netloc axi_dma_0_M_AXI_MM2S 1 3 8 NJ 490 NJ 490 NJ 490 NJ 490 NJ 490 NJ 490 NJ 490 N
+preplace netloc axi_dma_1_M_AXI_S2MM 1 10 1 N 350
+preplace netloc conv1_layer_axi_0_spike_out 1 4 1 1460 110n
+preplace netloc conv1_pool_axi_0_output_frame 1 5 1 N 320
+preplace netloc conv2_layer_axi_0_spike_out 1 6 1 2170 320n
+preplace netloc conv2_pool_axi_0_output_frame 1 7 1 2550 570n
+preplace netloc fc1_layer_axi_0_spike_out 1 8 1 2870 350n
+preplace netloc fc2_layer_axi_0_class_scores_out 1 9 1 N 350
+preplace netloc processing_system7_0_DDR 1 12 1 NJ 330
+preplace netloc processing_system7_0_FIXED_IO 1 12 1 NJ 350
+preplace netloc processing_system7_0_M_AXI_GP0 1 1 12 400 20 NJ 20 NJ 20 NJ 20 NJ 20 NJ 20 NJ 20 NJ 20 NJ 20 NJ 20 NJ 20 4390
+preplace netloc ps7_0_axi_periph_M00_AXI 1 2 2 700 90 NJ
+preplace netloc ps7_0_axi_periph_M01_AXI 1 2 4 NJ 210 NJ 210 NJ 210 1830
+preplace netloc ps7_0_axi_periph_M02_AXI 1 2 6 NJ 230 NJ 230 1450J 220 NJ 220 NJ 220 2520
+preplace netloc ps7_0_axi_periph_M03_AXI 1 2 7 730 400 1120J 440 NJ 440 NJ 440 2160J 330 NJ 330 NJ
+preplace netloc ps7_0_axi_periph_M04_AXI 1 2 1 710 270n
+preplace netloc ps7_0_axi_periph_M05_AXI 1 2 8 700 410 1100J 450 NJ 450 NJ 450 NJ 450 NJ 450 NJ 450 3270J
+preplace netloc smartconnect_0_M00_AXI 1 11 1 3950 350n
+preplace netloc smartconnect_1_M00_AXI 1 11 1 N 370
+levelinfo -pg 1 0 210 550 910 1290 1660 2000 2350 2710 3080 3470 3800 4170 4420
+pagesize -pg 1 -db -bbox -sgen 0 0 4540 700
+"
+}
+{
+   "da_axi4_cnt":"7",
+   "da_ps7_cnt":"1"
+}
