@@ -12,3 +12,23 @@ spikeface/*.gen/
 spikeface/*.xpr
 spikeface/*.log
 spikeface/*.jou
+
+# Reproducible verification and local application outputs
+__pycache__/
+*.pyc
+stress_sim/harness
+stress_sim/build/
+stress_sim/*.log
+hls_build/
+build/
+*.npy
+*.npz
+vitis_hls.log
+vivado.log
+vivado.jou
+xcd.log
+.venv/
+accuracy.json
+candidate_accuracy.json
+my_accuracy.json
+lfw_evaluation.json

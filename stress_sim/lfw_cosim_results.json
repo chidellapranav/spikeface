@@ -1,0 +1,11 @@
+{
+  "status": "incomplete; stopped before RTL transaction completion",
+  "fixture_timesteps": 2,
+  "active_top_when_stopped": "lfw_conv1_axi",
+  "opmode_warning_lines": 185862,
+  "last_reported_simulation_time_ns": 6017390,
+  "all_three_native_csim_passed": true,
+  "all_three_native_synthesis_passed": true,
+  "routed_wns_measured": false,
+  "reason": "Strict PyTorch numerical equivalence already failed; full RTL simulation was very slow and repeatedly emitted DSP primitive OPMODE warnings. These warnings were not resolved or declared harmless."
+}

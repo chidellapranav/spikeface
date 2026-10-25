@@ -68,6 +68,10 @@ def float_to_code(values, frac_bits, name="value", total_bits=8):
     float weights. Off-grid input is rejected rather than silently rounded.
     """
     v = np.asarray(values, dtype=np.float64)
+    if total_bits != 8 or not 0 <= frac_bits <= 7:
+        raise ValueError("This driver supports 8-bit codes with 0..7 fractional bits")
+    if v.size == 0 or not np.all(np.isfinite(v)):
+        raise ValueError(f"{name}: values must be nonempty and finite")
     scaled = v * (1 << frac_bits)
     codes = np.rint(scaled)
     if np.max(np.abs(scaled - codes)) > 1e-6:
@@ -103,6 +107,8 @@ def encode_frame(image01, rng):
 # ---------------------------------------------------------------------------
 class SpikeFaceOverlay:
     def __init__(self, bitstream_path=BITSTREAM_PATH, seed=0, timeout_s=5.0):
+        if not np.isfinite(timeout_s) or timeout_s <= 0:
+            raise ValueError("timeout_s must be positive and finite")
         self.bitstream_path = bitstream_path
         self.timeout_s = timeout_s
         self.rng = np.random.default_rng(seed)
@@ -120,6 +126,10 @@ class SpikeFaceOverlay:
                        ("conv1", "pool1", "conv2", "pool2", "fc1", "fc2")}
         self.dma_in = getattr(self.overlay, IP_NAMES["dma_in"])
         self.dma_out = getattr(self.overlay, IP_NAMES["dma_out"])
+        support = [hasattr(self.blocks[k].register_map, "clear_state") for k in SPIKING_BLOCKS]
+        if any(support) and not all(support):
+            raise RuntimeError("Mixed HLS reset interfaces: rebuild all three spiking IPs together")
+        self.supports_clear_state = all(support)
 
     # -------------------------------------------------------------- setup
     def configure(self, weights, beta=0.9375, threshold=1.0):
@@ -129,14 +139,26 @@ class SpikeFaceOverlay:
         beta, threshold: LIF parameters as real values (0.9375 = 0.95 quantized).
         Call once after boot / after every PL reload.
         """
-        self._params = dict(weights=weights, beta=beta, threshold=threshold)
+        if not np.isscalar(beta) or not np.isscalar(threshold) or not 0 <= beta <= 1 or threshold <= 0:
+            raise ValueError("Require scalar beta in [0,1] and threshold > 0")
         beta_code = int(float_to_code(beta, MEM_FRAC_BITS, "beta")[()])
         thr_code = int(float_to_code(threshold, MEM_FRAC_BITS, "threshold")[()])
+        prepared = {}
+        for name in WEIGHT_SHAPES:
+            w = np.asarray(weights[name])
+            if w.shape != WEIGHT_SHAPES[name]:
+                raise ValueError(f"{name}: expected weight shape {WEIGHT_SHAPES[name]}")
+            float_to_code(w, WEIGHT_FRAC_BITS[name], f"{name} weights")
+            if WEIGHT_OFFSET[name] + w.size > len(self.blocks[name].mmio.array) * 4:
+                raise RuntimeError(f"{name}: AXI-Lite address window cannot reach weights; rebuild the PL address map")
+            prepared[name] = w.copy()
+        self._params = None  # partial MMIO failure must not leave inference enabled
         for name in SPIKING_BLOCKS:
             self.blocks[name].register_map.beta = beta_code
             self.blocks[name].register_map.threshold = thr_code
         for name in ("conv1", "conv2", "fc1", "fc2"):
-            self._write_weights(name, weights[name])
+            self._write_weights(name, prepared[name])
+        self._params = dict(weights=prepared, beta=beta, threshold=threshold)
 
     def _write_weights(self, name, w):
         w = np.asarray(w)
@@ -160,8 +182,7 @@ class SpikeFaceOverlay:
     # -------------------------------------------------------------- state reset
     def reset_pl_state(self):
         """
-        conv1/conv2/fc1 keep membrane potentials in static BRAM with no reset
-        input, so state leaks from one image into the next. Reprogramming the PL
+        Legacy hardware has no per-image reset. Reprogramming the PL
         re-initialises those memories to zero; weights/parameters are then
         rewritten. Slow (~seconds) but needs no HLS change. Verify it with the
         determinism check in PS/DEPLOYMENT_AND_ACCURACY.md before trusting it.
@@ -177,7 +198,7 @@ class SpikeFaceOverlay:
         parts = []
         for k in COMPUTE_BLOCKS:
             c = self.blocks[k].register_map.CTRL
-            parts.append(f"{k}(idle={int(c.AP_IDLE)},done={int(c.AP_DONE)})")
+            parts.append(f"{k}(idle={int(c.AP_IDLE)})")
         parts.append(f"dma_in.idle={self.dma_in.sendchannel.idle}")
         parts.append(f"dma_out.idle={self.dma_out.recvchannel.idle}")
         return " ".join(parts)
@@ -188,7 +209,21 @@ class SpikeFaceOverlay:
             if time.perf_counter() - t0 > self.timeout_s:
                 raise TimeoutError(f"timeout waiting for {what}. State: {self._diagnose()}")
 
-    def _run_one_timestep(self, frame_flat, clear_accum):
+    def _wait_dma(self, channel, what, expected_bytes):
+        def complete():
+            if channel.error:
+                raise RuntimeError(f"{what}: DMA error. State: {self._diagnose()}")
+            if not channel.running:
+                raise RuntimeError(f"{what}: DMA halted. State: {self._diagnose()}")
+            return channel.idle
+        self._wait(complete, what)
+        # PYNQ wait() performs receive-buffer cache invalidation and records
+        # transferred bytes. Polling .idle alone skipped this housekeeping.
+        channel.wait()
+        if channel.transferred != expected_bytes:
+            raise RuntimeError(f"{what}: transferred {channel.transferred} bytes, expected {expected_bytes}")
+
+    def _run_one_timestep(self, frame_flat, clear_accum, clear_state=False):
         """
         Start order is DOWNSTREAM-FIRST (fc2, fc1, conv2, conv1). Each block only
         drains its input stream once started; starting upstream-first lets a
@@ -198,13 +233,18 @@ class SpikeFaceOverlay:
         for k in COMPUTE_BLOCKS:
             self._wait(lambda k=k: self.blocks[k].register_map.CTRL.AP_IDLE, f"{k} idle")
         self.blocks["fc2"].register_map.clear_accum = 1 if clear_accum else 0
+        if self.supports_clear_state:
+            for k in SPIKING_BLOCKS:
+                self.blocks[k].register_map.clear_state = int(clear_state)
         for k in ("fc2", "fc1", "conv2", "conv1"):
             self.blocks[k].register_map.CTRL.AP_START = 1
         self.spike_in_buf[:] = frame_flat
         self.dma_out.recvchannel.transfer(self.score_out_buf)   # arm the receiver first
         self.dma_in.sendchannel.transfer(self.spike_in_buf)
-        self._wait(lambda: self.dma_in.sendchannel.idle, "input DMA")
-        self._wait(lambda: self.dma_out.recvchannel.idle, "output DMA (fc2 TLAST)")
+        self._wait_dma(self.dma_in.sendchannel, "input DMA", IN_ELEMENTS)
+        self._wait_dma(self.dma_out.recvchannel, "output DMA (fc2 TLAST)", OUT_CLASSES * 4)
+        for k in COMPUTE_BLOCKS:
+            self._wait(lambda k=k: self.blocks[k].register_map.CTRL.AP_IDLE, f"{k} complete")
 
     def read_active_taps(self):
         """MAC taps actually computed in the last call, per spiking block."""
@@ -215,30 +255,41 @@ class SpikeFaceOverlay:
         return out
 
     def run_inference(self, image01=None, T=T_TIMESTEPS, spike_frames=None,
-                      fresh_state=False, return_trace=False, collect_taps=False):
+                      fresh_state=True, return_trace=False, collect_taps=False):
         """
         image01: 32x32 floats in [0,1], encoded on the PS each timestep -- OR --
         spike_frames: (T,32,32) or (T,1024) array of {0,1} to replay exact spikes.
-        fresh_state: reprogram the PL first so no state from a previous image remains.
+        fresh_state: isolate images (new clear_state flags, or legacy PL reload).
         Returns (predicted_class, final_scores[, extras]).
         """
         if self._params is None:
             raise RuntimeError("Call configure() first.")
-        if fresh_state:
-            self.reset_pl_state()
+        if isinstance(T, (bool, np.bool_)) or not isinstance(T, (int, np.integer)) or not 1 <= T <= 500:
+            raise ValueError("T must be an integer in 1..500")
+        if image01 is not None and spike_frames is not None:
+            raise ValueError("Provide image01 or spike_frames, not both")
         if spike_frames is not None:
-            frames = np.asarray(spike_frames, dtype=np.uint8).reshape(-1, IN_ELEMENTS)
+            frames = np.asarray(spike_frames)
+            if frames.ndim not in (2, 3) or frames.shape[1:] not in ((32, 32), (IN_ELEMENTS,)):
+                raise ValueError("spike_frames must have shape (T,32,32) or (T,1024)")
             if frames.shape[0] < T:
                 raise ValueError(f"spike_frames has {frames.shape[0]} timesteps, need {T}")
-            if frames.max() > 1:
+            if not np.all((frames == 0) | (frames == 1)):
                 raise ValueError("spike_frames must contain only 0/1")
+            frames = frames.astype(np.uint8).reshape(-1, IN_ELEMENTS)
         elif image01 is None:
             raise ValueError("Provide image01 or spike_frames.")
+        else:
+            image01 = np.asarray(image01, dtype=np.float64)
+            if image01.shape != (32, 32) or not np.all(np.isfinite(image01)) or np.any((image01 < 0) | (image01 > 1)):
+                raise ValueError("image01 must be a finite 32x32 array in [0,1]")
+        if fresh_state and not self.supports_clear_state:
+            self.reset_pl_state()
         trace, taps = [], {k: 0 for k in SPIKING_BLOCKS}
         for t in range(T):
             f = frames[t] if spike_frames is not None else \
                 encode_frame(np.asarray(image01, dtype=np.float64), self.rng).ravel()
-            self._run_one_timestep(f, clear_accum=(t == 0))
+            self._run_one_timestep(f, clear_accum=(t == 0), clear_state=(fresh_state and t == 0))
             if return_trace:
                 trace.append(unpack_scores(self.score_out_buf).copy())
             if collect_taps:

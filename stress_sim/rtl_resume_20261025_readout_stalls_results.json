@@ -1,0 +1,45 @@
+{
+  "campaign": "rtl_resume_20261025_readout_stalls",
+  "seconds": 616.302,
+  "results": [
+    {
+      "top": "lfw_readout_axi",
+      "returncode": 1,
+      "seconds": 616.265,
+      "random_stalls": true,
+      "transactions": 4,
+      "images": 2,
+      "timesteps_per_image": 2,
+      "fp_add_impl": "fabric",
+      "clock_period_ns": 20,
+      "opmode_warning_lines": 0,
+      "errors": [
+        "ERROR: [COSIM 212-4] *** C/RTL co-simulation finished: FAIL ***"
+      ],
+      "log": "stress_sim/build/rtl_resume_20261025_readout_stalls/lfw_readout_axi/vitis.log",
+      "cosim_report": "Report time       : Sun Oct 25 12:43:58 PM IST 2026.\nSolution          : sol.\nSimulation tool   : xsim.\n\n+----------+----------+-----------------------------------------------+-----------------------------------------------+----------------------+\n|          |          |             Latency(Clock Cycles)             |              Interval(Clock Cycles)           | Total Execution Time |\n+   RTL    +  Status  +-----------------------------------------------+-----------------------------------------------+    (Clock Cycles)    +\n|          |          |      min      |      avg      |      max      |      min      |      avg      |      max      |                      |\n+----------+----------+-----------------------------------------------+-----------------------------------------------+----------------------+\n|      VHDL|        NA|             NA|             NA|             NA|             NA|             NA|             NA|                    NA|\n|   Verilog|      Fail|             NA|             NA|             NA|             NA|             NA|             NA|                    NA|\n+----------+----------+-----------------------------------------------+-----------------------------------------------+----------------------+\n",
+      "pass": false,
+      "synthesis": {
+        "estimated_clock_ns": "14.600",
+        "resources": {
+          "BRAM_18K": "5",
+          "DSP": "3",
+          "FF": "2471",
+          "LUT": "4189",
+          "URAM": "0"
+        }
+      }
+    }
+  ],
+  "sources_sha256": {
+    "build_lfw_hls.tcl": "b631e55c978b4d47f389854e4774e289c8b6e984f32ae5349d676cf98468c802",
+    "stress_sim/tb_lfw_rtl_stress.cpp": "77a32451519e246aee32e70295aa960987f0c16b7f0f6c903d5434e39e382022",
+    "stress_sim/rtl_chain.cpp": "d50bb6c34ce5aa5d9ca394b761c82c0e3c4df5016d3a27de01488f8984fe7082",
+    "stress_sim/tb_lfw_rtl_chain.cpp": "ebb39966b806c4c4a50373a41747541d6bbf2c4c21fec78d34828a02b23d4da7",
+    "stress_sim/build/lfw_fixture.bin": "0d04379dec20f6085e0ef472fe3eb19b1114183b224c52b4d9c3c24ddb1ff17f",
+    "Spikeface_HLS/lfw_axi.cpp": "fcb599fd279513907a19b9f682641b8d2b8f1709ef563b6d57e702e9b0bcc685",
+    "Spikeface_HLS/lfw_model.cpp": "5262447270954133a72031dd4abb4b0e49b8fa783a01c90fb250b2b6bce7633c",
+    "Spikeface_HLS/lfw_model.h": "d3dfcae35f8aa30ba215e9c0f6340e6ac69dd135803de694033b0d6215f6639f"
+  },
+  "pass": false
+}

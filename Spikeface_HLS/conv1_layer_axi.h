@@ -19,7 +19,8 @@ void conv1_layer_axi(
     hls::stream<spike_t> &spike_out,
     mem_t beta,
     mem_t threshold,
-    long &total_active_taps
+    long &total_active_taps,
+    ap_uint<1> clear_state = 0
 );
 
 #endif

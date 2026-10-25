@@ -2,12 +2,8 @@
 
 // SpikeFace - Checkpoint 3: fc2 (readout) layer.
 //
-// Fully parallel per-neuron MAC (all 64 taps in one cycle) -- safe here
-// specifically because the input is spike_t (single-bit), so every "tap"
-// is a free conditional-accumulate, not a real multiply (see header
-// comment). This is the same efficiency conv1 relies on; conv2/fc1 needed
-// FC*_GROUP time-multiplexing precisely because THEIR inputs were
-// multi-valued pooled_t, not because of fan-in size alone.
+// One tap per cycle: binary inputs avoid a general multiplier, but the
+// AXI-Lite weight memory still limits parallel reads.
 void fc2_layer_axi(
     hls::stream<spike_t> &fc1_spikes_in,
     const weight_fc2_t weights[FC2_OUT][FC2_IN],
@@ -88,6 +84,7 @@ OUT_LOOP:
         score_packet_t pkt;
         pkt.data = axis_score_t(updated).range(31, 0);
         pkt.keep = -1;  // all 4 bytes valid
+        pkt.strb = -1;  // all 4 bytes are data, not position/null bytes
         pkt.last = (out_idx == FC2_OUT - 1) ? 1 : 0;
         class_scores_out.write(pkt);
     }

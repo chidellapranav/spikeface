@@ -1,5 +1,10 @@
 # SpikeFace — fc1 (Checkpoint 3 continued)
 
+**Historical checkpoint note.** The authoritative LFW path is now implemented in
+`lfw_model.h/.cpp`, `lfw_axi.cpp` and `tb_lfw_axi.cpp`. See the root README and
+`stress_sim/LFW_REPORT.md`; the older fixed-point blocks below remain a separate
+legacy architecture.
+
 ## What's different about fc1
 
 Structurally different from conv1/conv2: no spatial patches, no padding,

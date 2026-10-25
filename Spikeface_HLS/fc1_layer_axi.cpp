@@ -18,7 +18,8 @@ void fc1_layer_axi(
     hls::stream<spike_t> &spike_out,
     mem_t beta,
     mem_t threshold,
-    long &total_active_taps
+    long &total_active_taps,
+    ap_uint<1> clear_state
 ) {
 #pragma HLS INTERFACE axis port=input_flat
 #pragma HLS INTERFACE axis port=spike_out
@@ -26,6 +27,7 @@ void fc1_layer_axi(
 #pragma HLS INTERFACE s_axilite port=beta bundle=CTRL
 #pragma HLS INTERFACE s_axilite port=threshold bundle=CTRL
 #pragma HLS INTERFACE s_axilite port=total_active_taps bundle=CTRL
+#pragma HLS INTERFACE s_axilite port=clear_state bundle=CTRL
 #pragma HLS INTERFACE s_axilite port=return bundle=CTRL
 
     // Persistent membrane potential for all 64 output neurons.
@@ -60,7 +62,7 @@ OUT_LOOP:
             }
         }
 
-        mem_t mem_local = mem_state[out_idx];
+        mem_t mem_local = clear_state ? mem_t(0) : mem_state[out_idx];
         spike_t spk = lif_update(total_cur, mem_local, beta, threshold);
         mem_state[out_idx] = mem_local;
         spike_out.write(spk);

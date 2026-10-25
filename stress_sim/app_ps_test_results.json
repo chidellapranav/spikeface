@@ -1,0 +1,30 @@
+{
+  "tests": 26,
+  "pass": true,
+  "scope": "Unit, loopback HTTP, original source loading and mocked PS driver behavior; not board validation",
+  "test_names": [
+    "test_encoding_is_seeded_and_brightness_extremes (test_app.AppTests)",
+    "test_evaluation_paired_scores (test_app.AppTests)",
+    "test_fixture_trace_and_repeated_images (test_app.AppTests)",
+    "test_input_validation_before_cast (test_app.AppTests)",
+    "test_invalid_weights_and_labels (test_app.AppTests)",
+    "test_model_round_trip (test_app.AppTests)",
+    "test_request_validation (test_app.AppTests)",
+    "test_label_map_validation (test_lfw.LFWAppTests)",
+    "test_labeled_image_database (test_lfw.LFWAppTests)",
+    "test_pynq_requires_bitstream (test_lfw.LFWAppTests)",
+    "test_reference_model_and_metadata (test_lfw.LFWAppTests)",
+    "test_dma_errors_and_short_packets (test_lfw_ps.LFWPSTests)",
+    "test_parameter_pointers_and_float_codes (test_lfw_ps.LFWPSTests)",
+    "test_reject_invalid_configuration_and_images (test_lfw_ps.LFWPSTests)",
+    "test_reset_each_image_and_dma_cache (test_lfw_ps.LFWPSTests)",
+    "test_code_packing_and_score_decoding (test_ps.PSTests)",
+    "test_dma_error_and_short_transfer (test_ps.PSTests)",
+    "test_invalid_input_never_starts_hardware (test_ps.PSTests)",
+    "test_legacy_reset_fallback (test_ps.PSTests)",
+    "test_reject_invalid_fixed_point_values (test_ps.PSTests)",
+    "test_scheduler_and_cache_completion (test_ps.PSTests)",
+    "test_timeout (test_ps.PSTests)",
+    "test_window_validation_before_mmio_writes (test_ps.PSTests)"
+  ]
+}

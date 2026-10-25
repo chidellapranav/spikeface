@@ -1,0 +1,1 @@
+"""SpikeFace local inference application."""

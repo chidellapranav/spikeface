@@ -1,0 +1,80 @@
+[
+  {
+    "top": "conv1_layer_axi",
+    "estimated_clock_ns": "7.268",
+    "latency_min": "11210",
+    "latency_max": "11210",
+    "resources": {
+      "BRAM_18K": "5",
+      "DSP": "1",
+      "FF": "6652",
+      "LUT": "10866",
+      "URAM": "0"
+    }
+  },
+  {
+    "top": "conv1_pool_axi",
+    "estimated_clock_ns": "7.291",
+    "latency_min": "10253",
+    "latency_max": "10253",
+    "resources": {
+      "BRAM_18K": "4",
+      "FF": "114",
+      "LUT": "736",
+      "URAM": "0",
+      "DSP": "0"
+    }
+  },
+  {
+    "top": "conv2_layer_axi",
+    "estimated_clock_ns": "7.298",
+    "latency_min": "1032797",
+    "latency_max": "1032797",
+    "resources": {
+      "BRAM_18K": "6",
+      "DSP": "28",
+      "FF": "6672",
+      "LUT": "10381",
+      "URAM": "0"
+    }
+  },
+  {
+    "top": "conv2_pool_axi",
+    "estimated_clock_ns": "7.242",
+    "latency_min": "5132",
+    "latency_max": "5132",
+    "resources": {
+      "BRAM_18K": "4",
+      "FF": "102",
+      "LUT": "750",
+      "URAM": "0",
+      "DSP": "0"
+    }
+  },
+  {
+    "top": "fc1_layer_axi",
+    "estimated_clock_ns": "7.268",
+    "latency_min": "67462",
+    "latency_max": "67462",
+    "resources": {
+      "BRAM_18K": "33",
+      "DSP": "2",
+      "FF": "626",
+      "LUT": "1257",
+      "URAM": "0"
+    }
+  },
+  {
+    "top": "fc2_layer_axi",
+    "estimated_clock_ns": "7.055",
+    "latency_min": "2637",
+    "latency_max": "2637",
+    "resources": {
+      "BRAM_18K": "2",
+      "FF": "456",
+      "LUT": "814",
+      "URAM": "0",
+      "DSP": "0"
+    }
+  }
+]

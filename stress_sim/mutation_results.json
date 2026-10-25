@@ -1,0 +1,66 @@
+[
+  {
+    "mutation": "rounding_half_up",
+    "detected": true,
+    "failed_checks": 623,
+    "first": {
+      "name": "golden/conv1/t0/conv1/membrane",
+      "values": 8192,
+      "mismatches": 973,
+      "pass": false,
+      "first": {
+        "index": 0,
+        "actual": 1,
+        "expected": 0
+      }
+    }
+  },
+  {
+    "mutation": "invalid_strobes",
+    "detected": true,
+    "failed_checks": 372,
+    "first": {
+      "name": "golden/fc2/t0/fc2/strb",
+      "values": 40,
+      "mismatches": 40,
+      "pass": false,
+      "first": {
+        "index": 0,
+        "actual": 0,
+        "expected": 15
+      }
+    }
+  },
+  {
+    "mutation": "ignored_image_reset",
+    "detected": true,
+    "failed_checks": 37,
+    "first": {
+      "name": "stress/reset/chain/t8/conv1/axi",
+      "values": 8192,
+      "mismatches": 1242,
+      "pass": false,
+      "first": {
+        "index": 15,
+        "actual": 1,
+        "expected": 0
+      }
+    }
+  },
+  {
+    "mutation": "pool_scale_error",
+    "detected": true,
+    "failed_checks": 248,
+    "first": {
+      "name": "golden/pool1/t0/pool1/axi",
+      "values": 2048,
+      "mismatches": 113,
+      "pass": false,
+      "first": {
+        "index": 532,
+        "actual": 2,
+        "expected": 1
+      }
+    }
+  }
+]

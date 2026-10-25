@@ -65,9 +65,8 @@ typedef ap_axiu<32, 0, 0, 0> score_packet_t;
 // Input is fc1_layer_axi's spike output (spike_t, single-bit) -- NOT a
 // pooled multi-level value. This means, like conv1 and UNLIKE conv2/fc1,
 // fc2's MAC needs no real multiplier at all (a multiply against a single
-// bit degenerates to a conditional accumulate). No time-multiplexing
-// (no FC2_GROUP) is needed here -- the full 64-tap MAC per neuron can run
-// fully parallel in one cycle, same efficient pattern as conv1.
+// bit degenerates to a conditional accumulate). The implementation processes
+// one tap per cycle because its AXI-Lite weight memory limits read bandwidth.
 void fc2_layer_axi(
     hls::stream<spike_t> &fc1_spikes_in,
     const weight_fc2_t weights[FC2_OUT][FC2_IN],

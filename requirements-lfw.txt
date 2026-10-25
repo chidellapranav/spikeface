@@ -1,0 +1,4 @@
+# Install CPU PyTorch first via https://download.pytorch.org/whl/cpu when desired.
+torch==2.5.1
+snntorch==0.9.4
+scipy>=1.8,<2

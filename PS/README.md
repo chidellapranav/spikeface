@@ -1,5 +1,12 @@
 # PS — PYNQ driver for SpikeFace
 
+**Current LFW work:** `lfw_driver.py` targets the new 64×64 / 53-class IPs.
+See [the PS/PL plan](../docs/PS_PL_PLAN.md). It requires a new bitstream/HWH and
+has not been board-validated. The documentation below describes the legacy
+40-class `spikeface_driver.py`, whose validation, cache completion and per-image
+reset behavior have since been strengthened. New HLS sources expose clear_state;
+the old committed XSA does not.
+
 `spikeface_driver.py` is the Processing-System side of SpikeFace. It runs on the
 PYNQ-Z2's ARM core (Python + the `pynq` library) and drives the six-block PL
 datapath. It contains both the driver and the timestep scheduler; there is no

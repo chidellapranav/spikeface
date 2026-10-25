@@ -1,0 +1,44 @@
+[
+  {
+    "top": "lfw_conv1_axi",
+    "target_clock_ns": "20.00",
+    "estimated_clock_ns": "14.600",
+    "latency_min": "2748820",
+    "latency_max": "2748820",
+    "resources": {
+      "BRAM_18K": "25",
+      "DSP": "7",
+      "FF": "3389",
+      "LUT": "6208",
+      "URAM": "0"
+    }
+  },
+  {
+    "top": "lfw_conv2_axi",
+    "target_clock_ns": "20.00",
+    "estimated_clock_ns": "14.600",
+    "latency_min": "9977356",
+    "latency_max": "9977356",
+    "resources": {
+      "BRAM_18K": "14",
+      "DSP": "7",
+      "FF": "3325",
+      "LUT": "6280",
+      "URAM": "0"
+    }
+  },
+  {
+    "top": "lfw_readout_axi",
+    "target_clock_ns": "20.00",
+    "estimated_clock_ns": "14.600",
+    "latency_min": "658131",
+    "latency_max": "658237",
+    "resources": {
+      "BRAM_18K": "5",
+      "DSP": "5",
+      "FF": "2698",
+      "LUT": "4566",
+      "URAM": "0"
+    }
+  }
+]

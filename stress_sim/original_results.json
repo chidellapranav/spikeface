@@ -1,0 +1,74 @@
+[
+  {
+    "test": "tb_spikeface_neuron",
+    "pass": true,
+    "returncode": 0,
+    "seconds": 1.338
+  },
+  {
+    "test": "tb_conv1_array",
+    "pass": true,
+    "returncode": 0,
+    "seconds": 1.673
+  },
+  {
+    "test": "tb_conv1_array_axi",
+    "pass": true,
+    "returncode": 0,
+    "seconds": 2.892
+  },
+  {
+    "test": "tb_conv1_pool",
+    "pass": true,
+    "returncode": 0,
+    "seconds": 2.244
+  },
+  {
+    "test": "tb_conv1_pool_axi",
+    "pass": true,
+    "returncode": 0,
+    "seconds": 2.241
+  },
+  {
+    "test": "tb_conv2_array",
+    "pass": true,
+    "returncode": 0,
+    "seconds": 3.041
+  },
+  {
+    "test": "tb_conv2_array_axi",
+    "pass": true,
+    "returncode": 0,
+    "seconds": 2.999
+  },
+  {
+    "test": "tb_conv2_pool",
+    "pass": true,
+    "returncode": 0,
+    "seconds": 1.681
+  },
+  {
+    "test": "tb_conv2_pool_axi",
+    "pass": true,
+    "returncode": 0,
+    "seconds": 2.089
+  },
+  {
+    "test": "tb_fc1_layer",
+    "pass": true,
+    "returncode": 0,
+    "seconds": 2.304
+  },
+  {
+    "test": "tb_fc1_layer_axi",
+    "pass": true,
+    "returncode": 0,
+    "seconds": 2.644
+  },
+  {
+    "test": "tb_fc2_layer_axi",
+    "pass": true,
+    "returncode": 0,
+    "seconds": 2.001
+  }
+]

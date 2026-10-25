@@ -6,7 +6,8 @@ void conv1_layer_axi(
     hls::stream<spike_t> &spike_out,
     mem_t beta,
     mem_t threshold,
-    long &total_active_taps
+    long &total_active_taps,
+    ap_uint<1> clear_state
 ) {
 #pragma HLS INTERFACE axis port=input_frame
 #pragma HLS INTERFACE axis port=spike_out
@@ -14,6 +15,7 @@ void conv1_layer_axi(
 #pragma HLS INTERFACE s_axilite port=beta bundle=CTRL
 #pragma HLS INTERFACE s_axilite port=threshold bundle=CTRL
 #pragma HLS INTERFACE s_axilite port=total_active_taps bundle=CTRL
+#pragma HLS INTERFACE s_axilite port=clear_state bundle=CTRL
 #pragma HLS INTERFACE s_axilite port=return bundle=CTRL
 
     static mem_t mem_state[CONV1_OUT_CHANNELS][CONV1_H][CONV1_W];
@@ -59,7 +61,7 @@ CH_LOOP:
                         patch[kr*CONV1_K + kc] = padded[oy + kr][ox + kc];
 
                 int active_taps = 0;
-                mem_t mem_local = mem_state[ch][oy][ox];
+                mem_t mem_local = clear_state ? mem_t(0) : mem_state[ch][oy][ox];
                 spike_t spk = spikeface_neuron_step(patch, kernel_flat, mem_local,
                                                      beta, threshold, active_taps);
                 mem_state[ch][oy][ox] = mem_local;
