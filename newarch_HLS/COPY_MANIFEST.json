@@ -1,0 +1,72 @@
+[
+  {
+    "original": "Spikeface_HLS/lfw_model.h",
+    "copy": "lfw_model.h",
+    "sha256": "d3dfcae35f8aa30ba215e9c0f6340e6ac69dd135803de694033b0d6215f6639f",
+    "copied_sha256": "d3dfcae35f8aa30ba215e9c0f6340e6ac69dd135803de694033b0d6215f6639f",
+    "adapted": false
+  },
+  {
+    "original": "Spikeface_HLS/lfw_model.cpp",
+    "copy": "lfw_model.cpp",
+    "sha256": "5262447270954133a72031dd4abb4b0e49b8fa783a01c90fb250b2b6bce7633c",
+    "copied_sha256": "5262447270954133a72031dd4abb4b0e49b8fa783a01c90fb250b2b6bce7633c",
+    "adapted": false
+  },
+  {
+    "original": "Spikeface_HLS/lfw_axi.cpp",
+    "copy": "lfw_axi.cpp",
+    "sha256": "fcb599fd279513907a19b9f682641b8d2b8f1709ef563b6d57e702e9b0bcc685",
+    "copied_sha256": "fcb599fd279513907a19b9f682641b8d2b8f1709ef563b6d57e702e9b0bcc685",
+    "adapted": false
+  },
+  {
+    "original": "Spikeface_HLS/tb_lfw_axi.cpp",
+    "copy": "tb_lfw_axi.cpp",
+    "sha256": "38be08ba51e7eec9a6a0cbb0e6b8d69d2d60cc08052be46a440bbfcc2b86b8c1",
+    "copied_sha256": "38be08ba51e7eec9a6a0cbb0e6b8d69d2d60cc08052be46a440bbfcc2b86b8c1",
+    "adapted": false
+  },
+  {
+    "original": "build_lfw_hls.tcl",
+    "copy": "build_lfw_hls.tcl",
+    "sha256": "b631e55c978b4d47f389854e4774e289c8b6e984f32ae5349d676cf98468c802",
+    "copied_sha256": "39650a2a1604f1b477529702d928ace3f7ae8048b27ae618f186f783e0f74170",
+    "adapted": true
+  },
+  {
+    "original": "stress_sim/run_rtl_cosim.py",
+    "copy": "stress_sim/run_rtl_cosim.py",
+    "sha256": "89c2d8e32c22362245e4252fdab11ada715a1b0fdd8978216be184254c3aaa97",
+    "copied_sha256": "8f3373113bf81988065f7f97b9773c3f1bdf80aa962886666250a6132dd125e3",
+    "adapted": true
+  },
+  {
+    "original": "stress_sim/tb_lfw_rtl_stress.cpp",
+    "copy": "stress_sim/tb_lfw_rtl_stress.cpp",
+    "sha256": "77a32451519e246aee32e70295aa960987f0c16b7f0f6c903d5434e39e382022",
+    "copied_sha256": "77a32451519e246aee32e70295aa960987f0c16b7f0f6c903d5434e39e382022",
+    "adapted": false
+  },
+  {
+    "original": "stress_sim/rtl_chain.cpp",
+    "copy": "stress_sim/rtl_chain.cpp",
+    "sha256": "d50bb6c34ce5aa5d9ca394b761c82c0e3c4df5016d3a27de01488f8984fe7082",
+    "copied_sha256": "d50bb6c34ce5aa5d9ca394b761c82c0e3c4df5016d3a27de01488f8984fe7082",
+    "adapted": false
+  },
+  {
+    "original": "stress_sim/tb_lfw_rtl_chain.cpp",
+    "copy": "stress_sim/tb_lfw_rtl_chain.cpp",
+    "sha256": "ebb39966b806c4c4a50373a41747541d6bbf2c4c21fec78d34828a02b23d4da7",
+    "copied_sha256": "ebb39966b806c4c4a50373a41747541d6bbf2c4c21fec78d34828a02b23d4da7",
+    "adapted": false
+  },
+  {
+    "original": "stress_sim/build/lfw_fixture.bin",
+    "copy": "stress_sim/build/lfw_fixture.bin",
+    "sha256": "0d04379dec20f6085e0ef472fe3eb19b1114183b224c52b4d9c3c24ddb1ff17f",
+    "copied_sha256": "0d04379dec20f6085e0ef472fe3eb19b1114183b224c52b4d9c3c24ddb1ff17f",
+    "adapted": false
+  }
+]

@@ -1,0 +1,26 @@
+{
+  "top": "lfw_readout_axi",
+  "returncode": 0,
+  "seconds": 281.337,
+  "random_stalls": false,
+  "transactions": 4,
+  "images": 2,
+  "timesteps_per_image": 2,
+  "fp_add_impl": "fabric",
+  "clock_period_ns": 20,
+  "opmode_warning_lines": 0,
+  "errors": [],
+  "log": "stress_sim/build/rtl_resume_20261025_baseline/lfw_readout_axi/vitis.log",
+  "cosim_report": "Report time       : Sun Oct 25 12:33:33 PM IST 2026.\nSolution          : sol.\nSimulation tool   : xsim.\n\n+----------+----------+-----------------------------------------------+-----------------------------------------------+----------------------+\n|          |          |             Latency(Clock Cycles)             |              Interval(Clock Cycles)           | Total Execution Time |\n+   RTL    +  Status  +-----------------------------------------------+-----------------------------------------------+    (Clock Cycles)    +\n|          |          |      min      |      avg      |      max      |      min      |      avg      |      max      |                      |\n+----------+----------+-----------------------------------------------+-----------------------------------------------+----------------------+\n|      VHDL|        NA|             NA|             NA|             NA|             NA|             NA|             NA|                    NA|\n|   Verilog|      Pass|         891795|         911457|         931116|         891795|         904904|         931116|               3645830|\n+----------+----------+-----------------------------------------------+-----------------------------------------------+----------------------+\n",
+  "pass": true,
+  "synthesis": {
+    "estimated_clock_ns": "14.600",
+    "resources": {
+      "BRAM_18K": "5",
+      "DSP": "3",
+      "FF": "2471",
+      "LUT": "4189",
+      "URAM": "0"
+    }
+  }
+}

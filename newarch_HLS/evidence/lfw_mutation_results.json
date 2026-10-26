@@ -1,0 +1,54 @@
+[
+  {
+    "mutation": "immediate_instead_of_delayed_reset",
+    "detected": true,
+    "failed_checks": 223,
+    "first": {
+      "name": "stress/conv1/t0/spikes1",
+      "values": 8192,
+      "mismatches": 1024,
+      "max_absolute_error": 1.0,
+      "comparison": "exact",
+      "pass": false
+    }
+  },
+  {
+    "mutation": "inclusive_threshold",
+    "detected": true,
+    "failed_checks": 122,
+    "first": {
+      "name": "stress/exact_chain/t0/spikes1",
+      "values": 8192,
+      "mismatches": 111,
+      "max_absolute_error": 1.0,
+      "comparison": "exact",
+      "pass": false
+    }
+  },
+  {
+    "mutation": "sum_instead_of_mean",
+    "detected": true,
+    "failed_checks": 32,
+    "first": {
+      "name": "stress/readout/t1/scores/bits",
+      "values": 53,
+      "mismatches": 53,
+      "max_absolute_error": 8388608.0,
+      "comparison": "exact",
+      "pass": false
+    }
+  },
+  {
+    "mutation": "bad_tlast",
+    "detected": true,
+    "failed_checks": 24,
+    "first": {
+      "name": "stress/readout/t0/last",
+      "values": 53,
+      "mismatches": 2,
+      "max_absolute_error": 1.0,
+      "comparison": "exact",
+      "pass": false
+    }
+  }
+]
