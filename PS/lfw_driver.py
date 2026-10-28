@@ -91,6 +91,10 @@ class LFWOverlay:
             self.dma_in.sendchannel.transfer(self.buffers["input"])
             self._dma_wait(self.dma_in.sendchannel, "input", 4096*4)
             self._dma_wait(self.dma_out.recvchannel, "scores", 53*4)
+            for name, ip in self.blocks.items():
+                self._wait(lambda ip=ip: bool(ip.read(0) & 4), name+" completion")
+            if not np.all(np.isfinite(self.buffers["output"])):
+                raise RuntimeError("Nonfinite LFW hardware scores; reload overlay before retrying")
             if return_trace:
                 trace.append(np.asarray(self.buffers["output"]).copy())
         scores = np.asarray(self.buffers["output"]).copy()

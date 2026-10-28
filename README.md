@@ -181,6 +181,7 @@ are implied by unit tests.
 2. [Repository Structure](#2-repository-structure)
 3. [Codebase Explanation (Block-wise)](#3-codebase-explanation-block-wise)
 4. [Setup and Configuration (Vitis HLS and Vivado)](#4-setup-and-configuration-vitis-hls-and-vivado)
+5. [Verify the LFW Prototype on PYNQ-Z2](#5-verify-the-lfw-prototype-on-pynq-z2)
 
 ---
 
@@ -673,3 +674,118 @@ The end-to-end PYNQ driver (weight loading, spike encoding, timestep loop) is un
 | Synthesis reports *II violation: resource limitation* | A memory has too few ports for the parallel reads. See the array-partition comments in `conv1_pool*.cpp` and the single-read-port note in `fc2_layer_axi.cpp`. |
 | DMA S2MM never completes | The score stream needs `TLAST`. Re-export `fc2_layer_axi` from the current source (`ap_axiu` output). |
 | Part `xc7z020clg400-1` not found | Install Zynq-7000 device support through the Xilinx installer. |
+
+---
+
+## 5. Verify the LFW Prototype on PYNQ-Z2
+
+This procedure applies to the **current 64x64, 53-identity LFW design** and
+assumes its PL implementation and timing have already been verified. Use the
+matching LFW hardware exported from your PL build, not the legacy 40-class XSA
+described in Section 4. The board verification has two stages: golden replay
+to check hardware outputs, then test-set inference to measure accuracy.
+
+### 5.1 Prepare the hardware and runtime
+
+Boot the PYNQ-Z2 with its PYNQ image and use the board's PYNQ Python environment.
+The board runner requires **NumPy and PYNQ**; PyTorch and snnTorch are needed only
+on the host for export. Check that the hardware exposes `lfw_conv1_axi_0`,
+`lfw_conv2_axi_0`, `lfw_readout_axi_0`, `axi_dma_0` and `axi_dma_1`, with register
+offsets matching `PS/lfw_driver.py` and the exported HWH/driver headers.
+
+Prepare matching `.bit` and `.hwh` files with the **same basename**, such as
+`lfw_system.bit` and `lfw_system.hwh`. If only `.bit` and `.xsa` are available,
+extract the HWH from that matching XSA. The runtime loads the bit/HWH pair.
+
+### 5.2 Export the model and test data on the host
+
+From the repository root, in the host environment containing the reference
+model dependencies, run:
+
+```bash
+python -m PS.export_lfw --repo ../trmp_spike --output board_bundle
+```
+
+Adjust `--repo` to the reference checkout's location. Add `--checkpoint PATH`
+only when intentionally selecting another compatible checkpoint. Use a fresh
+output directory. The export packs the weights, biases, BN affine parameters,
+model configuration, LFW test images and labels, and expected score traces for
+two distinct test images. It also records checkpoint and bundle hashes.
+
+Training and testing use separate image splits from LFW, covering the same 53
+identities. This workflow evaluates **`X_test.npy` against `y_test.npy`**, using
+the exact ordering in `class_names.npy`; it does not train on the board. The
+original training used test accuracy to select its checkpoint, so this split
+is not an untouched final holdout despite being separate from training images.
+
+### 5.3 Copy the deployment files to the board
+
+Transfer the following into a working folder such as
+`/home/xilinx/spikeface/`:
+
+```text
+spikeface/
+  PS/                      # Copy this repository's PS directory
+  board_bundle/
+    manifest.json
+    lfw_bundle.npz
+  lfw_system.bit
+  lfw_system.hwh
+```
+
+Run the following board commands from that working folder. The training
+checkout and PyTorch are not required on the board.
+
+### 5.4 Run golden replay on the board
+
+```bash
+python3 -m PS.run_lfw --bundle board_bundle --bitstream lfw_system.bit --output smoke.json
+```
+
+Golden replay sends known images through the FPGA and compares its actual
+53-class scores at **every timestep** with the exported sequential float32
+reference. It runs **image A, image B, then image A again**, clearing network
+state for each image. This checks reference agreement, repeatability and
+different-image reset behavior. The default model repeats the same normalized
+64x64 grayscale image for 25 timesteps; it does not use Bernoulli encoding.
+
+Require `passed: true` in `smoke.json`. A mismatch, DMA error or timeout stops
+the run with a nonzero exit. Resolve the failure before measuring accuracy.
+The reference follows the HLS numerical contract; it is not a claim of bitwise
+equivalence to PyTorch's reduction order. Passing these cases is a bring-up
+check, not proof of correctness for every possible input.
+
+### 5.5 Measure test-set accuracy on the board
+
+First run a short check, then the complete test set:
+
+```bash
+python3 -m PS.run_lfw --bundle board_bundle --bitstream lfw_system.bit --mode evaluate --limit 5 --output five_images.json
+python3 -m PS.run_lfw --bundle board_bundle --bitstream lfw_system.bit --mode evaluate --output board_accuracy.json
+```
+
+Both commands repeat golden replay before evaluation. For each test image,
+the FPGA produces 53 scores; the largest score selects the predicted identity.
+Compare that prediction with the true label in `y_test.npy`:
+
+**Accuracy (%) = correct test predictions / total test images evaluated x 100.**
+
+The full report records accuracy, correct/image counts, predictions, labels,
+scores, confusion matrix, fabric clock and hardware/model hashes. Limited runs
+are marked partial and must not be reported as full-dataset accuracy. Dataset
+elapsed time includes Python orchestration, not just accelerator execution.
+The original checkpoint's simulation baseline is **406/554 (73.2852%)**;
+report the actual board result rather than assuming it matches that baseline.
+
+### 5.6 Diagnose a failed run
+
+Check IP names and register offsets, the loaded bit/HWH pairing, DDR parameter
+connectivity, DMA stream widths and output TLAST. The driver checks transfer
+sizes of **16384 input bytes and 212 output bytes per timestep**, waits for IP
+completion and checks finite output scores. After a DMA error or timeout,
+rerun the command to reload the overlay before retrying. `--timeout SECONDS`
+adjusts the default 60-second per-wait timeout. Ensure no other process owns
+the same DMA channels.
+
+See [PS/LFW_BOARD_RUN.md](PS/LFW_BOARD_RUN.md) for the deployment instructions
+and [PS/lfw_driver.py](PS/lfw_driver.py) for the board scheduler.

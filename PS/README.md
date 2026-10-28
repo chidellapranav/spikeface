@@ -1,5 +1,10 @@
 # PS — PYNQ driver for SpikeFace
 
+For the current LFW prototype, follow [LFW_BOARD_RUN.md](LFW_BOARD_RUN.md).
+`python -m PS.export_lfw` prepares a portable host-side bundle;
+`python3 -m PS.run_lfw` performs golden replay and dataset evaluation on the
+board using NumPy and PYNQ, without PyTorch.
+
 **Current LFW work:** `lfw_driver.py` targets the new 64×64 / 53-class IPs.
 See [the PS/PL plan](../docs/PS_PL_PLAN.md). It requires a new bitstream/HWH and
 has not been board-validated. The documentation below describes the legacy
