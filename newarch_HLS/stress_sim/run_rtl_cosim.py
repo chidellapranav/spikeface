@@ -21,12 +21,12 @@ ROOT = Path(__file__).resolve().parents[1]
 TOPS = ["lfw_conv1_axi", "lfw_conv2_axi", "lfw_readout_axi", "lfw_chain_verify"]
 
 
-def execute(top, campaign, vitis, stalls):
+def execute(top, campaign, vitis, stalls, export_ip=False):
     work = campaign/top
     work.mkdir(parents=True, exist_ok=True)
     log_path = work/"vitis.log"
     build_root = work/"projects"
-    env = dict(os.environ, SPIKEFACE_HLS_STAGE="cosim", SPIKEFACE_HLS_BLOCK=top,
+    env = dict(os.environ, SPIKEFACE_HLS_STAGE="all" if export_ip else "cosim", SPIKEFACE_HLS_BLOCK=top,
                SPIKEFACE_HLS_BUILD_DIR=str(build_root), SPIKEFACE_FP_ADD_IMPL="fabric",
                SPIKEFACE_COSIM_TEST="stress", SPIKEFACE_COSIM_STALL=str(int(stalls)))
     start = time.time()
@@ -56,6 +56,10 @@ def execute(top, campaign, vitis, stalls):
         xml = ET.parse(p).getroot()
         result["synthesis"] = {"estimated_clock_ns": xml.findtext(".//EstimatedClockPeriod"),
                                "resources": {n.tag: n.text for n in xml.findall(".//AreaEstimates/Resources/*")}}
+    if export_ip:
+        archives = sorted((solution/"impl/ip").glob("*.zip"))
+        result["ip_archives"] = [str(p.relative_to(ROOT)) for p in archives]
+        result["pass"] = result["pass"] and bool(archives)
     (work/"result.json").write_text(json.dumps(result, indent=2)+"\n")
     print(json.dumps({k: result[k] for k in ["top", "pass", "seconds", "opmode_warning_lines", "returncode"]}), flush=True)
     return result
@@ -66,6 +70,7 @@ def main():
     p.add_argument("--jobs", type=int, default=3)
     p.add_argument("--top", choices=TOPS, action="append")
     p.add_argument("--no-stalls", action="store_true")
+    p.add_argument("--export-ip", action="store_true", help="Package IP after successful RTL cosimulation")
     p.add_argument("--name", default="rtl_stress")
     args = p.parse_args()
     if not re.fullmatch(r"[A-Za-z0-9_-]+", args.name) or args.jobs < 1:
@@ -81,7 +86,7 @@ def main():
     selected = args.top or TOPS[:3]
     start = time.time()
     with concurrent.futures.ThreadPoolExecutor(max_workers=min(args.jobs, len(selected))) as pool:
-        futures = [pool.submit(execute, top, campaign, vitis, not args.no_stalls) for top in selected]
+        futures = [pool.submit(execute, top, campaign, vitis, not args.no_stalls, args.export_ip) for top in selected]
         results = [f.result() for f in futures]
     sources = [ROOT/"build_lfw_hls.tcl", ROOT/"stress_sim/tb_lfw_rtl_stress.cpp",
                ROOT/"stress_sim/rtl_chain.cpp", ROOT/"stress_sim/tb_lfw_rtl_chain.cpp", fixture,

@@ -5,7 +5,7 @@ set fixture [file join $repo stress_sim build lfw_fixture.bin]
 if {![file exists $fixture]} {error "Missing bundled stress_sim/build/lfw_fixture.bin"}
 set stage csim
 if {[info exists ::env(SPIKEFACE_HLS_STAGE)]} {set stage $::env(SPIKEFACE_HLS_STAGE)}
-if {$stage ni {csim synth cosim export}} {error "Unknown stage: $stage"}
+if {$stage ni {csim synth cosim export all}} {error "Unknown stage: $stage"}
 set build_dir [file join $repo hls_build]
 if {[info exists ::env(SPIKEFACE_HLS_BUILD_DIR)]} {set build_dir [file normalize $::env(SPIKEFACE_HLS_BUILD_DIR)]}
 file mkdir $build_dir
@@ -47,14 +47,14 @@ foreach top $tops {
  config_op fsub -impl $add_impl
  csim_design
  if {$stage ne "csim"} {csynth_design}
- if {$stage eq "cosim"} {
+ if {$stage in {cosim all}} {
   if {[info exists ::env(SPIKEFACE_COSIM_STALL)] && $::env(SPIKEFACE_COSIM_STALL) eq "1"} {
    cosim_design -rtl verilog -random_stall
   } else {
    cosim_design -rtl verilog
   }
  }
- if {$stage eq "export"} {export_design -format ip_catalog}
+ if {$stage in {export all}} {export_design -format ip_catalog}
  close_project
 }
 if {$selected==0} {error "Requested LFW block not found"}
