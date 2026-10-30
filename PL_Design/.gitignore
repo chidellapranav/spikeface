@@ -1,0 +1,21 @@
+# Vivado generated outputs; retain the wrapper referenced by the XPR.
+lfw_pynq_z2_build/*.cache/
+lfw_pynq_z2_build/*.hw/
+lfw_pynq_z2_build/*.ip_user_files/
+lfw_pynq_z2_build/*.runs/
+lfw_pynq_z2_build/*.sim/
+lfw_pynq_z2_build/*.gen/*
+!lfw_pynq_z2_build/*.gen/sources_1/
+lfw_pynq_z2_build/*.gen/sources_1/*
+!lfw_pynq_z2_build/*.gen/sources_1/bd/
+lfw_pynq_z2_build/*.gen/sources_1/bd/*
+!lfw_pynq_z2_build/*.gen/sources_1/bd/lfw_system/
+lfw_pynq_z2_build/*.gen/sources_1/bd/lfw_system/*
+!lfw_pynq_z2_build/*.gen/sources_1/bd/lfw_system/hdl/
+lfw_pynq_z2_build/*.gen/sources_1/bd/lfw_system/hdl/*
+!lfw_pynq_z2_build/*.gen/sources_1/bd/lfw_system/hdl/lfw_system_wrapper.v
+*.bda
+*.ui
+*.log
+*.jou
+board_files/
