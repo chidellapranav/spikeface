@@ -32,3 +32,20 @@ accuracy.json
 candidate_accuracy.json
 my_accuracy.json
 lfw_evaluation.json
+
+# Archived design build products
+Spike_old/Spikeface_HLS/solution*/
+Spike_old/Spikeface_HLS/solnfc*/
+Spike_old/spikeface/*.cache/
+Spike_old/spikeface/*.hw/
+Spike_old/spikeface/*.ip_user_files/
+Spike_old/spikeface/*.runs/
+Spike_old/spikeface/*.sim/
+Spike_old/spikeface/*.gen/
+Spike_old/spikeface/*.xpr
+Spike_old/spikeface/*.log
+Spike_old/spikeface/*.jou
+Spike_old/stress_sim/harness
+Spike_old/stress_sim/build/
+Spike_old/stress_sim/*.log
+Spike_old/hls_build/

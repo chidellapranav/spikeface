@@ -1,6 +1,6 @@
 # New LFW HLS architecture — standalone RTL cosimulation package
 
-Copied on 2026-10-26 from the sibling `Spikeface_HLS` and repository verification assets. Originals were retained. The three production tops share `lfw_model.h`, `lfw_model.cpp`, and `lfw_axi.cpp`; they are not three separate source files. All design sources and testbenches are byte-identical copies. Only build/runner paths and misleading runner image-count metadata were adapted. `COPY_MANIFEST.json` records original and copied SHA-256 hashes.
+Copied on 2026-10-26 from the original `Spikeface_HLS` and repository verification assets. The four LFW baseline files remain in `../Spikeface_HLS`; fixed-point sources now live in `../Spike_old/Spikeface_HLS`. The three production tops share `lfw_model.h`, `lfw_model.cpp`, and `lfw_axi.cpp`; they are not three separate source files. All design sources and testbenches are byte-identical copies. Only build/runner paths and misleading runner image-count metadata were adapted. `COPY_MANIFEST.json` records original and copied SHA-256 hashes.
 
 ## Run
 

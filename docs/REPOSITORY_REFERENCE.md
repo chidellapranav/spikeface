@@ -1,10 +1,11 @@
 # SpikeFace repository reference
 
-This is the initial 80-file snapshot. Subsequent work recovered the incompatible
+This is the initial 80-file snapshot. Legacy paths listed below now live under
+`Spike_old/`; the inventory is retained as a historical record. Subsequent work recovered the incompatible
 53-class LFW Python model and made it authoritative at the owner's request.
 Current implementation, verification and measured accuracy are documented in
-[the project README](spikeface/README.md) and
-[the LFW report](spikeface/stress_sim/LFW_REPORT.md). Vitis/Vivado were later
+[the project README](../README.md) and
+[the LFW report](../stress_sim/LFW_REPORT.md). Vitis/Vivado were later
 discovered outside PATH and native HLS checks were performed; the statements
 below describe the initial read-only review.
 

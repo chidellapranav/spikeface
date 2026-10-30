@@ -8,7 +8,7 @@ import numpy as np
 from PIL import Image
 from app.engine import Model, evaluate, fixture_frames, image_frames, valid_frames
 from app.server import infer_request
-from stress_sim.reference import golden_arrays
+from Spike_old.stress_sim.reference import golden_arrays
 
 
 class AppTests(unittest.TestCase):
@@ -18,7 +18,7 @@ class AppTests(unittest.TestCase):
         cls.frames = fixture_frames()
 
     def test_fixture_trace_and_repeated_images(self):
-        expected = golden_arrays(Path(__file__).resolve().parents[1] / "Spikeface_HLS/golden_fc2.h")["GOLDEN_FC2_SCORES"]
+        expected = golden_arrays(Path(__file__).resolve().parents[1] / "Spike_old/Spikeface_HLS/golden_fc2.h")["GOLDEN_FC2_SCORES"]
         first = self.model.infer(self.frames)
         self.model.infer(1-self.frames[:3])
         second = self.model.infer(self.frames)

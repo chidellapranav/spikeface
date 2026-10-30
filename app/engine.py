@@ -4,7 +4,7 @@ from pathlib import Path
 import time
 import numpy as np
 from PIL import Image, ImageOps
-from stress_sim.reference import Network, SHAPES, golden_arrays
+from Spike_old.stress_sim.reference import Network, SHAPES, golden_arrays
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -43,7 +43,7 @@ class Model:
 
     @classmethod
     def golden(cls):
-        src = ROOT / "Spikeface_HLS"
+        src = ROOT / "Spike_old/Spikeface_HLS"
         spec = [("conv1", "golden_conv1_array.h", "GOLDEN_ARR_KERNELS", 128),
                 ("conv2", "golden_conv2.h", "GOLDEN_CONV2_WEIGHTS", 128),
                 ("fc1", "golden_fc1.h", "GOLDEN_FC1_WEIGHTS", 128),
@@ -92,7 +92,7 @@ def image_frames(source, timesteps=50, seed=0):
 
 
 def fixture_frames():
-    return golden_arrays(ROOT / "Spikeface_HLS/golden_conv1_array.h")["GOLDEN_ARR_INPUT"].astype(np.int64)
+    return golden_arrays(ROOT / "Spike_old/Spikeface_HLS/golden_conv1_array.h")["GOLDEN_ARR_INPUT"].astype(np.int64)
 
 
 def evaluate(model, dataset):

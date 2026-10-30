@@ -1,4 +1,4 @@
-# Run from the repository root: vitis_hls -f build_hls_ips.tcl
+# Run from Spike_old/: vitis_hls -f build_hls_ips.tcl
 # SPIKEFACE_HLS_STAGE: csim (default), synth, cosim, export.
 # SPIKEFACE_HLS_BLOCK: optional top function; default builds all six.
 set repo [file dirname [file normalize [info script]]]

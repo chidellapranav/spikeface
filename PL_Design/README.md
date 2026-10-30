@@ -11,6 +11,11 @@ This design uses the three floating-point LFW HLS IPs.
 - `lfw_pynq_z2_build/lfw_pynq_z2.gen/sources_1/bd/lfw_system/hdl/lfw_system_wrapper.v`: top-level wrapper.
 - `lfw_pynq_z2_build/lfw_system.xsa`: existing hardware handoff archive,
   **without a bitstream**. It does not establish successful implementation or timing closure.
+- `lfw_pynq_z2_build/lfw_system_301026.xsa`: newer hardware export containing
+  `lfw_system_301026.bit` and the top-level `lfw_system.hwh`. Follow
+  [the boot and run guide](../bootrun/README.md) to extract the matching overlay
+  pair and deploy it. Regenerating the bitstream and XSA in Vivado after cloning
+  is recommended.
 - `create_lfw_pl.tcl`: alternative project-generation and implementation flow.
 
 ## Prepare the IP repositories

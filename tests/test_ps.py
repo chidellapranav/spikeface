@@ -9,7 +9,7 @@ import numpy as np
 
 
 def load_driver():
-    spec = importlib.util.spec_from_file_location("driver_test_subject", Path(__file__).resolve().parents[1]/"PS/spikeface_driver.py")
+    spec = importlib.util.spec_from_file_location("driver_test_subject", Path(__file__).resolve().parents[1]/"Spike_old/PS/spikeface_driver.py")
     module = importlib.util.module_from_spec(spec)
     with patch.dict(sys.modules, {"pynq": SimpleNamespace(Overlay=None, allocate=None, Clocks=None)}):
         spec.loader.exec_module(module)

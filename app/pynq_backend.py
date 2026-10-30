@@ -6,7 +6,7 @@ from .engine import valid_frames
 
 class PynqModel:
     def __init__(self, model, bitstream):
-        from PS.spikeface_driver import SpikeFaceOverlay, WEIGHT_FRAC_BITS
+        from Spike_old.PS.spikeface_driver import SpikeFaceOverlay, WEIGHT_FRAC_BITS
         self.metadata = dict(model.metadata, hardware_bitstream=bitstream)
         self.labels = model.labels
         self.sf = SpikeFaceOverlay(bitstream)
