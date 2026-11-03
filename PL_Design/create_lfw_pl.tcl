@@ -26,8 +26,8 @@ set mode bd
 if {[llength $argv] > 0} {set mode [lindex $argv 0]}
 if {$mode ni {bd bit}} {error "Mode must be bd or bit"}
 set script_dir [file dirname [file normalize [info script]]]
-set hls [env_or SPIKEFACE_HLS_ROOT /home/pranavsai/Spikeface_Project/Branch_Linux/spikeface/newarch_HLS]
-set board_repo [env_or SPIKEFACE_BOARD_REPO /home/pranavsai/PYNQZ2]
+set hls [env_or SPIKEFACE_HLS_ROOT [file join $script_dir .. newarch_HLS]]
+set board_repo [env_or SPIKEFACE_BOARD_REPO [file join $script_dir board_files]]
 set out [file normalize [file join [pwd] lfw_pynq_z2_build]]
 if {[llength $argv] > 1} {set out [file normalize [lindex $argv 1]]}
 if {$out eq $script_dir || [string first "$script_dir/" "$out/"] == 0} {

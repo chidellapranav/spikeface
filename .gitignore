@@ -28,6 +28,7 @@ vivado.log
 vivado.jou
 xcd.log
 .venv/
+CMakeUserPresets.json
 accuracy.json
 candidate_accuracy.json
 my_accuracy.json

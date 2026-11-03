@@ -1,5 +1,131 @@
 # SpikeFace — dataset inference and HLS verification
 
+## Folders and entry points
+
+Paths below are relative to this Git repository (`spikeface/`), not its parent
+workspace. The project targets spiking face classification on PYNQ-Z2.
+
+| Folder | Contents and role |
+| --- | --- |
+| [`newarch_HLS/`](newarch_HLS/README.md) | Separate optimized LFW implementation, HLS build/GUI scripts, bundled fixture, RTL campaign runner, and historical evidence. Recommended starting point for the proposed hardware automation. |
+| [`Spikeface_HLS/`](Spikeface_HLS/README.md) | LFW baseline C++ sources and testbench used by the root HLS build and verification tools. Changes here do not automatically update `newarch_HLS/`. |
+| [`PL_Design/`](PL_Design/README.md) | Current Vivado project, block design, hardware exports, and `create_lfw_pl.tcl` project/bitstream generator. Board presets are a separate prerequisite. |
+| `hls_ip/` | Packaged conv1, conv2, and readout IP archives. Unpack the three per-IP `export.zip` files before Vivado registration. These do not update automatically when sources change. |
+| [`PS/`](PS/README.md) | Current LFW board driver, host model/data bundle exporter, golden replay, and board evaluation CLI. |
+| [`bootrun/`](bootrun/README.md) | Boot/deployment instructions, supplied `.bit`/`.hwh`/`.xsa` files, and runtime script copies. Refresh hardware and runtime copies together after changes. |
+| `app/` | Python LFW evaluation and readout-refit utilities, plus legacy inference, demo, and HTTP commands. Entry point: `python -m app`. |
+| [`stress_sim/`](stress_sim/README.md) | Root LFW references, fixture export, C++/AXI verification, mutation tests, RTL runners, and reports. Root tools generally exercise the baseline sources. |
+| `tests/` | Python application, HTTP, PS driver, and bundle regression tests. |
+| [`models/`](models/README.md) | Readout-refit candidate checkpoint and experiment report, separate from the original checkpoint. |
+| `docs/` | PS/PL integration plan and historical repository review. Read dated status statements in their historical context. |
+| [`Spike_old/`](Spike_old/README.md) | Archived 32x32, 40-class fixed-point HLS, Vivado, PS, and verification flow. Incompatible with the current LFW model. |
+| `.git/` | Git metadata. |
+
+Root files: `build_lfw_hls.tcl` builds the baseline; `requirements.txt` lists
+NumPy/Pillow dependencies; `requirements-lfw.txt` adds PyTorch, snnTorch, and
+SciPy; `.gitignore` excludes local environments and generated outputs.
+
+## Hardware flow
+
+```text
+PS image -> input DMA -> lfw_conv1_axi -> lfw_conv2_axi
+         -> lfw_readout_axi -> output DMA -> PS class scores
+PS DDR parameters ----------> each HLS IP through AXI memory access
+PS AXI-Lite ----------------> configuration, start, and state clear
+```
+
+The three production tops share `lfw_model.cpp`, `lfw_model.h`, and
+`lfw_axi.cpp`. The default model repeats a normalized 64x64 grayscale image for
+25 timesteps. Each timestep transfers 4096 float32 pixels in and 53 float32
+scores out. Clear all blocks on the first timestep of each image and start
+downstream blocks before upstream producers. Existing scripts target
+`xc7z020clg400-1`, a 20 ns HLS clock, and 50 MHz PL operation using
+Vitis HLS/Vivado 2022.2.
+
+## CMake configuration for HLS and Vivado
+
+Requires CMake 3.24+, Ninja for the supplied preset, and installed AMD tools.
+Run from this repository root in a shell with the vendor tool environment set.
+The current targets use the optimized `newarch_HLS/` sources and bundled fixture,
+PYNQ-Z2, 20 ns, and fabric floating-point add/sub. The baseline root Tcl flow
+remains available separately.
+
+Configure with actual executable paths (replace these example paths):
+
+```powershell
+cmake --preset hardware `
+  -DSPIKEFACE_HLS_EXECUTABLE="$env:SPIKEFACE_HLS_EXECUTABLE" `
+  -DSPIKEFACE_VIVADO_EXECUTABLE="$env:SPIKEFACE_VIVADO_EXECUTABLE" `
+  -DSPIKEFACE_BOARD_REPO="$env:SPIKEFACE_BOARD_REPO"
+```
+
+Alternatively set `SPIKEFACE_HLS_ROOT` and `SPIKEFACE_VIVADO_ROOT` to installation
+folders containing `bin/`; tools are also searched on PATH. Linux example:
+
+```bash
+cmake --preset hardware \
+  -DSPIKEFACE_HLS_ROOT="$SPIKEFACE_HLS_ROOT" \
+  -DSPIKEFACE_VIVADO_ROOT="$SPIKEFACE_VIVADO_ROOT" \
+  -DSPIKEFACE_BOARD_REPO="$SPIKEFACE_BOARD_REPO"
+```
+
+The board repository must contain `pynq-z2/A.0/board.xml`. Store local settings
+in ignored `CMakeUserPresets.json` if desired. Without Ninja, use a supported
+installed generator explicitly, for example `cmake -S . -B build/hardware -G
+"Unix Makefiles"` on Linux with the same cache settings.
+
+| Configuration | Default / meaning |
+| --- | --- |
+| `SPIKEFACE_HLS_EXECUTABLE`, `SPIKEFACE_VIVADO_EXECUTABLE` | Full launcher paths; take priority over discovery. |
+| `SPIKEFACE_HLS_ROOT`, `SPIKEFACE_VIVADO_ROOT` | Installation roots used as discovery hints. |
+| `SPIKEFACE_HLS_VERSION`, `SPIKEFACE_VIVADO_VERSION` | Expected reported release, both `2022.2`; an empty value skips the release comparison. |
+| `SPIKEFACE_ENABLE_HLS`, `SPIKEFACE_ENABLE_VIVADO` | Both `ON`; disable either to configure only the other tool. |
+| `SPIKEFACE_BOARD_REPO` | Local PYNQ-Z2 board repository. Checked before Vivado builds. |
+| `SPIKEFACE_CONV1_IP`, `SPIKEFACE_CONV2_IP`, `SPIKEFACE_READOUT_IP` | Unpacked repositories containing `component.xml`; default to this build's HLS exports. |
+
+Changing releases requires updating both the executable/root and expected
+version. Use a new build directory when switching installations to avoid cached
+paths and mixed IP. Version checks do not establish compatibility. The current
+HLS launcher is `vitis_hls -f`; unified-flow releases may require an adapter
+using `vitis-run --mode hls --tcl`, as described in [AMD documentation](https://docs.amd.com/r/en-US/ug1553-vitis-ide/vitis-run-Command).
+Windows launchers are accepted, but native hardware execution on Windows has
+not been validated; the existing RTL campaign documentation assumes Linux.
+
+Build targets explicitly; the default build does not launch vendor tools:
+
+```bash
+cmake --build build/hardware --target hls-csim
+cmake --build build/hardware --target hls-synth
+cmake --build build/hardware --target hls-cosim
+cmake --build build/hardware --target hls-export
+cmake --build build/hardware --target vivado-bd
+cmake --build build/hardware --target vivado-bit
+```
+
+Each HLS target processes all three production tops. It runs its complete
+pipeline from C simulation in a separate `build/hardware/hls/<stage>/` directory;
+`hls-export` additionally requires RTL co-simulation before packaging. These
+explicit targets rerun when requested; they do not provide incremental stage
+reuse. Do not run the same target concurrently from separate build processes.
+
+Run `hls-export` before either Vivado target when using default IP paths.
+Vivado targets do not automatically invoke HLS, so existing verified exports
+can be reused. To use committed IP archives instead, unpack the three per-IP
+ZIPs and configure `SPIKEFACE_CONV1_IP`, `SPIKEFACE_CONV2_IP`, and
+`SPIKEFACE_READOUT_IP` explicitly. These must correspond to the intended sources.
+
+`vivado-bd` creates and validates a project; `vivado-bit` independently creates
+a project and runs implementation, timing/DRC checks, bitstream generation,
+and matching `.bit`/`.hwh`/`.xsa` export. Each invocation writes to a fresh,
+printed directory under `build/hardware/vivado/<mode>/`, preserving previous
+runs. Board replay remains a separate deployment check.
+
+Implementation files are `CMakeLists.txt`, `CMakePresets.json`,
+`cmake/FindXilinxTools.cmake`, and `cmake/RunVivado.cmake`. CMake invokes the
+existing vendor Tcl scripts; it does not install tools or board presets.
+
+## Current model
+
 The current target is the **64×64, 53-identity LFW model** supplied in
 [`trmp_spike`](https://github.com/chidellapranav/trmp_spike), selected by the
 project owner as the authoritative algorithm. The original 32×32 / 40-class HLS
@@ -41,9 +167,9 @@ git clone https://github.com/chidellapranav/trmp_spike.git ../trmp_spike
 python -m app lfw-evaluate --repo ../trmp_spike --output accuracy.json
 ```
 
-In the current workspace the reference repo is already cloned, and PyTorch /
-snnTorch are installed in the ignored verification build folder. Without a new
-installation, use:
+If you have already cloned the reference repo and installed PyTorch /
+snnTorch in the ignored verification build folder, you can reuse that
+installation:
 
 ```bash
 PYTHONPATH=stress_sim/build/python_deps python3 -m app lfw-evaluate \
@@ -160,34 +286,12 @@ a temporary loopback port. Neither browser visual QA nor physical board tests
 are implied by unit tests.
 
 
-## Repository layout
-
-| Path | Purpose |
-| --- | --- |
-| `newarch_HLS/` | Current optimized LFW HLS and standalone RTL verification |
-| `Spikeface_HLS/` | Original LFW baseline sources used by root build/verification tools |
-| `PL_Design/` | Current Vivado project, XSA, and IP setup guide |
-| [`bootrun/`](bootrun/README.md) | PYNQ-Z2 boot, build, deployment, and evaluation commands and artifact paths |
-| `PS/` | Current LFW board driver and bundle tools |
-| `app/`, `tests/` | Shared application and regression tests, including legacy compatibility |
-| `stress_sim/` | Current LFW verification and evidence |
-| `hls_ip/`, `models/`, `docs/` | IP archives, model experiment, and project documentation |
-| `Spike_old/` | Previous fixed-point HLS/Vivado design, XSA, driver, and verification |
-
-For the old build flow, work from `Spike_old/` and follow its README.
-Shared legacy application commands still run from the repository root and
-load the archived driver, numerical reference, and golden fixtures.
-The four LFW baseline files remain in `Spikeface_HLS/` because root LFW tools
-use them; `newarch_HLS/` contains a separately optimized implementation.
-Local generated `hls_build/` outputs remain in place.
-
-
 ## 5. Verify the LFW Prototype on PYNQ-Z2
 
 This procedure applies to the **current 64x64, 53-identity LFW design** and
 assumes its PL implementation and timing have already been verified. Use the
 matching LFW hardware exported from your PL build, not the legacy 40-class XSA
-described in Section 4. The board verification has two stages: golden replay
+under `Spike_old/`. The board verification has two stages: golden replay
 to check hardware outputs, then test-set inference to measure accuracy.
 
 ### 5.1 Prepare the hardware and runtime

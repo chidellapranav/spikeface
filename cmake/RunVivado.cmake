@@ -1,0 +1,22 @@
+if(NOT EXISTS "${BOARD_REPO}/pynq-z2/A.0/board.xml")
+  message(FATAL_ERROR "Set SPIKEFACE_BOARD_REPO to a repository containing pynq-z2/A.0/board.xml")
+endif()
+foreach(block CONV1 CONV2 READOUT)
+  if(NOT EXISTS "${${block}_IP}/component.xml")
+    message(FATAL_ERROR "Missing ${block} IP: ${${block}_IP}/component.xml. Run hls-export first or configure SPIKEFACE_${block}_IP.")
+  endif()
+  set(ENV{SPIKEFACE_${block}_IP} "${${block}_IP}")
+endforeach()
+set(ENV{SPIKEFACE_BOARD_REPO} "${BOARD_REPO}")
+# The vendor generator refuses existing projects. Keep each invocation for review.
+string(TIMESTAMP run_id "%Y%m%d-%H%M%S" UTC)
+string(RANDOM LENGTH 8 ALPHABET 0123456789abcdef suffix)
+set(output "${OUTPUT_ROOT}/${run_id}-${suffix}")
+file(MAKE_DIRECTORY "${output}")
+message(STATUS "Vivado ${MODE} output: ${output}")
+execute_process(COMMAND "${VIVADO}" -mode batch -source "${SOURCE}"
+  -tclargs "${MODE}" "${output}"
+  WORKING_DIRECTORY "${output}" RESULT_VARIABLE result)
+if(NOT "${result}" STREQUAL "0")
+  message(FATAL_ERROR "Vivado failed (${result}); inspect ${output}")
+endif()

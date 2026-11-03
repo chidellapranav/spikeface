@@ -78,7 +78,9 @@ def main():
     fixture = ROOT/"stress_sim/build/lfw_fixture.bin"
     if not fixture.is_file() or int.from_bytes(fixture.read_bytes()[:4], "little") != 2:
         p.error("Restore the bundled two-timestep stress_sim/build/lfw_fixture.bin")
-    vitis = os.environ.get("VITIS_HLS") or shutil.which("vitis_hls") or "/home/pranavsai/WORK/Vitis_HLS/2022.2/bin/vitis_hls"
+    vitis = os.environ.get("VITIS_HLS") or shutil.which("vitis_hls")
+    if not vitis:
+        p.error("Set VITIS_HLS to the installed launcher or add vitis_hls to PATH")
     campaign = ROOT/"stress_sim/build"/args.name
     if campaign.exists():
         p.error("Campaign directory exists; select a new --name to preserve prior evidence")

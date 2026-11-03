@@ -12,7 +12,7 @@ From this folder, run a baseline campaign for all three blocks:
 python3 stress_sim/run_rtl_cosim.py --name baseline_01 --jobs 3 --no-stalls
 ```
 
-The runner locates `vitis_hls` on PATH, otherwise uses the original local installation. Set `VITIS_HLS` to override. Use a fresh campaign name each time. Results and logs go under this folder's `stress_sim/build/<name>`; summary JSON goes under `stress_sim`. Convolutions can take a long time; use `--jobs 1` to limit concurrent resource usage.
+The runner locates `vitis_hls` on PATH. Set `VITIS_HLS` to the installed launcher to override discovery; there is no machine-specific fallback. Use a fresh campaign name each time. Results and logs go under this folder's `stress_sim/build/<name>`; summary JSON goes under `stress_sim`. Convolutions can take a long time; use `--jobs 1` to limit concurrent resource usage.
 
 Run one block, random stalls, or the verification-only integrated finite-FIFO chain:
 
@@ -27,7 +27,7 @@ Random stalls are enabled unless `--no-stalls` is supplied. A prior readout rand
 Direct HLS invocation (single block, same stress test):
 
 ```bash
-SPIKEFACE_HLS_STAGE=cosim SPIKEFACE_HLS_BLOCK=lfw_conv1_axi SPIKEFACE_COSIM_TEST=stress /home/pranavsai/WORK/Vitis_HLS/2022.2/bin/vitis_hls -f build_lfw_hls.tcl
+SPIKEFACE_HLS_STAGE=cosim SPIKEFACE_HLS_BLOCK=lfw_conv1_axi SPIKEFACE_COSIM_TEST=stress vitis_hls -f build_lfw_hls.tcl
 ```
 
 Replace the top with `lfw_conv2_axi` or `lfw_readout_axi`. This builds under local `hls_build` and resets the selected project. Omitting `SPIKEFACE_COSIM_TEST=stress` uses the original two-transaction tolerance-based testbench. Default target: `xc7z020clg400-1`, 20 ns, fabric floating-point add/sub, and `-ffp-contract=off`. No simulation was rerun while assembling this package.

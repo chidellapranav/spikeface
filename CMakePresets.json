@@ -1,0 +1,16 @@
+{
+  "version": 5,
+  "cmakeMinimumRequired": { "major": 3, "minor": 24, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "hardware",
+      "displayName": "SpikeFace hardware (local tool paths required)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/hardware",
+      "cacheVariables": {
+        "SPIKEFACE_HLS_VERSION": "2022.2",
+        "SPIKEFACE_VIVADO_VERSION": "2022.2"
+      }
+    }
+  ]
+}
