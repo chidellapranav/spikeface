@@ -18,6 +18,8 @@ This design uses the three floating-point LFW HLS IPs.
   is recommended.
 - `create_lfw_pl.tcl`: alternative project-generation and implementation flow.
 
+For a complete beginner walkthrough, follow [Build with CMake](../README.md#build-with-cmake-start-here). The packaged-IP CMake option unpacks archives automatically. The steps below describe the manual Vivado alternative.
+
 ## Prepare the IP repositories
 
 From the repository root, unpack the committed archives:
@@ -47,7 +49,7 @@ per-IP archives listed above for this setup.
 
 Place the PYNQ-Z2 board files so this file exists:
 `<repo>/PL_Design/board_files/pynq-z2/A.0/board.xml`.
-The board files are a local prerequisite and are not bundled here.
+The required board definition, pin mapping, and PS preset are bundled here. CMake selects `PL_Design/board_files` automatically; no separate download or installation into Vivado is needed. See `board_files/README.md` for provenance.
 Before opening the project, register them in the Vivado Tcl Console:
 
 ```tcl

@@ -18,4 +18,3 @@ lfw_pynq_z2_build/*.gen/sources_1/bd/lfw_system/hdl/*
 *.ui
 *.log
 *.jou
-board_files/

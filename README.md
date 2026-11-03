@@ -7,9 +7,9 @@ workspace. The project targets spiking face classification on PYNQ-Z2.
 
 | Folder | Contents and role |
 | --- | --- |
-| [`newarch_HLS/`](newarch_HLS/README.md) | Separate optimized LFW implementation, HLS build/GUI scripts, bundled fixture, RTL campaign runner, and historical evidence. Recommended starting point for the proposed hardware automation. |
+| [`newarch_HLS/`](newarch_HLS/README.md) | Separate optimized LFW implementation, HLS build/GUI scripts, bundled fixture, RTL campaign runner, and historical evidence. Source implementation used by the CMake HLS targets. |
 | [`Spikeface_HLS/`](Spikeface_HLS/README.md) | LFW baseline C++ sources and testbench used by the root HLS build and verification tools. Changes here do not automatically update `newarch_HLS/`. |
-| [`PL_Design/`](PL_Design/README.md) | Current Vivado project, block design, hardware exports, and `create_lfw_pl.tcl` project/bitstream generator. Board presets are a separate prerequisite. |
+| [`PL_Design/`](PL_Design/README.md) | Current Vivado project, block design, hardware exports, and `create_lfw_pl.tcl` project/bitstream generator. PYNQ-Z2 board presets are bundled under `board_files/`. |
 | `hls_ip/` | Packaged conv1, conv2, and readout IP archives. Unpack the three per-IP `export.zip` files before Vivado registration. These do not update automatically when sources change. |
 | [`PS/`](PS/README.md) | Current LFW board driver, host model/data bundle exporter, golden replay, and board evaluation CLI. |
 | [`bootrun/`](bootrun/README.md) | Boot/deployment instructions, supplied `.bit`/`.hwh`/`.xsa` files, and runtime script copies. Refresh hardware and runtime copies together after changes. |
@@ -42,87 +42,315 @@ downstream blocks before upstream producers. Existing scripts target
 `xc7z020clg400-1`, a 20 ns HLS clock, and 50 MHz PL operation using
 Vitis HLS/Vivado 2022.2.
 
-## CMake configuration for HLS and Vivado
+## Build with CMake: start here
 
-Requires CMake 3.24+, Ninja for the supplied preset, and installed AMD tools.
-Run from this repository root in a shell with the vendor tool environment set.
-The current targets use the optimized `newarch_HLS/` sources and bundled fixture,
-PYNQ-Z2, 20 ns, and fabric floating-point add/sub. The baseline root Tcl flow
-remains available separately.
+This walkthrough builds the current **64x64, 53-class LFW design for PYNQ-Z2**.
+CMake coordinates Vitis HLS and Vivado; the vendor tools perform the hardware
+work. You do not need a physical board to generate a Vivado project or bitstream.
+You need a board only for deployment and inference.
 
-Configure with actual executable paths (replace these example paths):
+The repository includes the HLS test fixture, packaged IP archives, Vivado Tcl,
+and **PYNQ-Z2 board definitions in `PL_Design/board_files/pynq-z2/A.0/`**.
+No separate board-file download or installation into Vivado is required.
+The bundled files are `board.xml`, `part0_pins.xml`, and `preset.xml`; see
+[board-file provenance](PL_Design/board_files/README.md).
+
+### 1. Install and check the required software
+
+| Software | Requirement |
+| --- | --- |
+| CMake | Version 3.24 or newer. |
+| Ninja | Build launcher used by the commands below. |
+| Vivado | 2022.2, with Zynq-7000 device support and any license required by your installation. |
+| Vitis HLS | 2022.2 for rebuilding HLS IP. Not needed for the packaged-IP Vivado route. |
+| Git | Optional if you download and extract the repository ZIP instead. |
+
+On Windows, open **PowerShell**. If CMake or Ninja is missing, install them:
 
 ```powershell
-cmake --preset hardware `
-  -DSPIKEFACE_HLS_EXECUTABLE="$env:SPIKEFACE_HLS_EXECUTABLE" `
-  -DSPIKEFACE_VIVADO_EXECUTABLE="$env:SPIKEFACE_VIVADO_EXECUTABLE" `
-  -DSPIKEFACE_BOARD_REPO="$env:SPIKEFACE_BOARD_REPO"
+winget install --id Kitware.CMake --exact
+winget install --id Ninja-build.Ninja --exact
 ```
 
-Alternatively set `SPIKEFACE_HLS_ROOT` and `SPIKEFACE_VIVADO_ROOT` to installation
-folders containing `bin/`; tools are also searched on PATH. Linux example:
+Close and reopen PowerShell after installation. Confirm both commands work:
 
-```bash
-cmake --preset hardware \
-  -DSPIKEFACE_HLS_ROOT="$SPIKEFACE_HLS_ROOT" \
-  -DSPIKEFACE_VIVADO_ROOT="$SPIKEFACE_VIVADO_ROOT" \
-  -DSPIKEFACE_BOARD_REPO="$SPIKEFACE_BOARD_REPO"
+```powershell
+cmake --version
+ninja --version
 ```
 
-The board repository must contain `pynq-z2/A.0/board.xml`. Store local settings
-in ignored `CMakeUserPresets.json` if desired. Without Ninja, use a supported
-installed generator explicitly, for example `cmake -S . -B build/hardware -G
-"Unix Makefiles"` on Linux with the same cache settings.
+Install AMD tools separately before continuing. CMake does not install them.
+Python, PyTorch, model downloads, and the external training repository are not
+needed for the CMake hardware flow using the bundled fixture and packaged IPs.
 
-| Configuration | Default / meaning |
+### 2. Open your repository folder and identify the tool launchers
+
+Clone the repository, or download its ZIP and extract it fully. In PowerShell,
+use `Set-Location` followed by your actual extracted repository directory. This
+must be the folder containing `CMakeLists.txt`, `README.md`, and `PL_Design`.
+Then run:
+
+```powershell
+$repo = (Get-Location).Path
+Test-Path "$repo/CMakeLists.txt"
+Test-Path "$repo/PL_Design/board_files/pynq-z2/A.0/board.xml"
+```
+
+Both must return `True`. If not, open the correct directory or obtain the complete
+updated repository. Paths in this guide are calculated from `$repo`, so the
+checkout can be on any drive and its name can contain spaces.
+
+Find your installed Vivado folder in File Explorer. Inside its `bin` directory,
+locate `vivado.bat`. Do the same for `vitis_hls.bat` in the Vitis HLS installation
+if you plan to rebuild the IPs. Save the full paths in local variables:
+
+```powershell
+$vivado = Read-Host 'Paste the full path to bin/vivado.bat, without surrounding quotes'
+Test-Path -LiteralPath $vivado
+& $vivado -version
+```
+
+`Test-Path` must return `True`; the version output must identify 2022.2.
+These paths stay on your machine. They are not written into shared source files.
+PowerShell does not have a `source` command; do not use Linux `source` syntax
+or add `\d` before a path. The launcher can normally be invoked directly as above.
+
+### 3. Choose a build route
+
+| Route | Use it when | What it proves |
+| --- | --- | --- |
+| A: packaged IPs | You want to test Vivado without waiting for HLS synthesis. | The supplied IP archives integrate into the generated design. It does not rebuild or verify edited C++ sources. |
+| B: rebuild HLS | You changed HLS sources or want newly generated hardware. | Executes the selected HLS verification/build stages before Vivado consumes their exports. |
+
+Use separate build directories for the two routes. Generated files stay there,
+not in the source folders. Keep the same PowerShell window open so the variables
+above remain defined. If you reopen it, repeat step 2 and define the route's build
+variable again.
+
+### Route A: create the Vivado design using included IPs
+
+Configure a new build directory:
+
+```powershell
+$build = Join-Path $repo 'build/packaged-vivado'
+cmake -S "$repo" -B "$build" -G Ninja `
+  "-DSPIKEFACE_VIVADO_EXECUTABLE=$vivado" `
+  -DSPIKEFACE_ENABLE_HLS=OFF `
+  -DSPIKEFACE_USE_PACKAGED_IP=ON
+```
+
+PowerShell continuation backticks must be the last character on each line, with
+no trailing spaces. Successful configuration prints the Vivado path and release,
+then `Configuring done`, `Generating done`, and the build directory.
+CMake automatically unpacks all three committed IP archives into
+`$build/packaged_ip/` and selects the bundled board files. No manual unzip or
+board-path setting is needed.
+
+Create and validate the block design:
+
+```powershell
+cmake --build "$build" --target vivado-bd
+```
+
+This creates the Zynq PS, DMA, three HLS blocks, interconnects, reset/clock wiring,
+and address map, validates the design, generates output products, and exports a
+hardware handoff without a bitstream. It does not run full design synthesis or
+implementation. Output-product generation can still take time.
+
+The terminal prints a fresh directory under `$build/vivado/bd/`. To inspect the
+result, open `lfw_pynq_z2.xpr` from that directory in Vivado 2022.2, then open the
+`lfw_system` block design. The command must finish successfully; merely seeing a
+project file is not evidence that every build step passed.
+
+### Route B: verify and rebuild all three HLS IPs
+
+Set and check the HLS launcher, then configure a separate build:
+
+```powershell
+$hls = Read-Host 'Paste the full path to bin/vitis_hls.bat, without surrounding quotes'
+Test-Path -LiteralPath $hls
+& $hls -version
+
+$build = Join-Path $repo 'build/rebuilt-hardware'
+cmake -S "$repo" -B "$build" -G Ninja `
+  "-DSPIKEFACE_HLS_EXECUTABLE=$hls" `
+  "-DSPIKEFACE_VIVADO_EXECUTABLE=$vivado" `
+  -DSPIKEFACE_USE_PACKAGED_IP=OFF
+```
+
+Check the configuration completes successfully. Run C simulation first:
+
+```powershell
+cmake --build "$build" --target hls-csim
+```
+
+Only continue after a successful exit. To inspect resource and timing estimates
+before attempting RTL verification, optionally run:
+
+```powershell
+cmake --build "$build" --target hls-synth
+```
+
+To produce the IPs that Vivado will use, run:
+
+```powershell
+cmake --build "$build" --target hls-export
+```
+
+`hls-export` runs C simulation, synthesis, RTL co-simulation, and packaging for
+all three production tops. RTL co-simulation can take a long time. Successful
+synthesis alone does not mean export or RTL verification has completed.
+
+These targets use the optimized `newarch_HLS/` sources, 20 ns, fabric floating-point
+add/sub, the stress testbench, and no randomized stalls. Each target runs its
+complete pipeline in an independent stage directory because the existing Tcl
+resets HLS projects. Thus `hls-export` repeats work even after `hls-synth`.
+`hls-cosim` is also available for RTL verification without export. Do not run the
+same target concurrently from separate terminals.
+
+Check that all exported IP definitions exist:
+
+```powershell
+Test-Path "$build/hls/export/lfw_conv1_axi/sol/impl/ip/component.xml"
+Test-Path "$build/hls/export/lfw_conv2_axi/sol/impl/ip/component.xml"
+Test-Path "$build/hls/export/lfw_readout_axi/sol/impl/ip/component.xml"
+```
+
+All three must return `True`, and `hls-export` must have exited successfully.
+Now create the Vivado design from those new exports:
+
+```powershell
+cmake --build "$build" --target vivado-bd
+```
+
+Vivado targets do not automatically run HLS; this lets users reuse completed
+exports without repeating a long HLS campaign.
+
+### 4. Generate the FPGA bitstream (either route)
+
+After your route succeeds, use its same `$build` directory:
+
+```powershell
+cmake --build "$build" --target vivado-bit
+```
+
+This creates a fresh project, runs synthesis and routing, checks setup/hold
+slack and DRC errors, then generates the bitstream and matching hardware files.
+It does not reuse the project created by `vivado-bd`. Timing failure stops the
+flow; do not treat an incomplete run as deployable hardware.
+
+Each invocation prints its unique output directory under `$build/vivado/bit/`.
+On success, that directory contains:
+
+| Output | Meaning |
 | --- | --- |
-| `SPIKEFACE_HLS_EXECUTABLE`, `SPIKEFACE_VIVADO_EXECUTABLE` | Full launcher paths; take priority over discovery. |
-| `SPIKEFACE_HLS_ROOT`, `SPIKEFACE_VIVADO_ROOT` | Installation roots used as discovery hints. |
-| `SPIKEFACE_HLS_VERSION`, `SPIKEFACE_VIVADO_VERSION` | Expected reported release, both `2022.2`; an empty value skips the release comparison. |
-| `SPIKEFACE_ENABLE_HLS`, `SPIKEFACE_ENABLE_VIVADO` | Both `ON`; disable either to configure only the other tool. |
-| `SPIKEFACE_BOARD_REPO` | Local PYNQ-Z2 board repository. Checked before Vivado builds. |
-| `SPIKEFACE_CONV1_IP`, `SPIKEFACE_CONV2_IP`, `SPIKEFACE_READOUT_IP` | Unpacked repositories containing `component.xml`; default to this build's HLS exports. |
+| `lfw_system.bit` | FPGA programming image. |
+| `lfw_system.hwh` | Matching hardware metadata used by PYNQ. |
+| `lfw_system.xsa` | Hardware handoff including the bitstream. |
+| `lfw_pynq_z2.xpr` | Vivado project for inspection. |
+| `timing_summary.rpt`, `utilization.rpt`, `drc.rpt` | Routed timing, resources, and design-rule results. |
 
-Changing releases requires updating both the executable/root and expected
-version. Use a new build directory when switching installations to avoid cached
-paths and mixed IP. Version checks do not establish compatibility. The current
-HLS launcher is `vitis_hls -f`; unified-flow releases may require an adapter
-using `vitis-run --mode hls --tcl`, as described in [AMD documentation](https://docs.amd.com/r/en-US/ug1553-vitis-ide/vitis-run-Command).
-Windows launchers are accepted, but native hardware execution on Windows has
-not been validated; the existing RTL campaign documentation assumes Linux.
+Always deploy the `.bit` and `.hwh` from the same successful run. Building hardware
+does not measure face-recognition accuracy. Follow [the boot and deployment
+guide](bootrun/README.md) and [board replay instructions](PS/LFW_BOARD_RUN.md)
+for the additional model/data export and physical-board checks.
 
-Build targets explicitly; the default build does not launch vendor tools:
+### 5. Build outside the repository, if preferred
 
-```bash
-cmake --build build/hardware --target hls-csim
-cmake --build build/hardware --target hls-synth
-cmake --build build/hardware --target hls-cosim
-cmake --build build/hardware --target hls-export
-cmake --build build/hardware --target vivado-bd
-cmake --build build/hardware --target vivado-bit
+The `$build` directory may be any new writable folder outside `PL_Design`,
+including a folder on another drive. To select it interactively before a route's
+configure command, use:
+
+```powershell
+$build = Read-Host 'Enter the full path of your chosen build folder'
 ```
 
-Each HLS target processes all three production tops. It runs its complete
-pipeline from C simulation in a separate `build/hardware/hls/<stage>/` directory;
-`hls-export` additionally requires RTL co-simulation before packaging. These
-explicit targets rerun when requested; they do not provide incremental stage
-reuse. Do not run the same target concurrently from separate build processes.
+Keep `-S "$repo"` as the source and `-B "$build"` as the output. Never use the
+repository root itself as the build directory. Reuse the same output folder for
+subsequent `cmake --build` commands. Choose a fresh one when switching between
+packaged and rebuilt IPs or changing tool installations; CMake caches settings.
 
-Run `hls-export` before either Vivado target when using default IP paths.
-Vivado targets do not automatically invoke HLS, so existing verified exports
-can be reused. To use committed IP archives instead, unpack the three per-IP
-ZIPs and configure `SPIKEFACE_CONV1_IP`, `SPIKEFACE_CONV2_IP`, and
-`SPIKEFACE_READOUT_IP` explicitly. These must correspond to the intended sources.
+### 6. Configuration reference and version changes
 
-`vivado-bd` creates and validates a project; `vivado-bit` independently creates
-a project and runs implementation, timing/DRC checks, bitstream generation,
-and matching `.bit`/`.hwh`/`.xsa` export. Each invocation writes to a fresh,
-printed directory under `build/hardware/vivado/<mode>/`, preserving previous
-runs. Board replay remains a separate deployment check.
+| CMake setting | Default and purpose |
+| --- | --- |
+| `SPIKEFACE_HLS_EXECUTABLE`, `SPIKEFACE_VIVADO_EXECUTABLE` | Explicit installed launchers; otherwise discover tools on PATH. |
+| `SPIKEFACE_HLS_ROOT`, `SPIKEFACE_VIVADO_ROOT` | Optional installation directories containing `bin`; discovery hints instead of explicit launcher paths. |
+| `SPIKEFACE_HLS_VERSION`, `SPIKEFACE_VIVADO_VERSION` | Expected reported releases, both `2022.2`. |
+| `SPIKEFACE_ENABLE_HLS`, `SPIKEFACE_ENABLE_VIVADO` | Both `ON`; disabling a tool removes its targets and discovery requirement. |
+| `SPIKEFACE_USE_PACKAGED_IP` | `OFF`: use this build's HLS exports. `ON`: unpack committed archives for Vivado at configure time. |
+| `SPIKEFACE_BOARD_REPO` | Defaults to this checkout's `PL_Design/board_files`; no override needed normally. |
+| `SPIKEFACE_CONV1_IP`, `SPIKEFACE_CONV2_IP`, `SPIKEFACE_READOUT_IP` | Optional overrides for unpacked IP repositories containing `component.xml`. Explicit cached paths take priority over either IP mode. |
 
-Implementation files are `CMakeLists.txt`, `CMakePresets.json`,
-`cmake/FindXilinxTools.cmake`, and `cmake/RunVivado.cmake`. CMake invokes the
-existing vendor Tcl scripts; it does not install tools or board presets.
+To change a setting, repeat the configure command with the new `-D` value, then
+build. A plain `cmake --build "$build"` has no hardware target selected and does
+not launch a hardware build. Select a target explicitly.
+
+Version settings check the executable; they do not install or migrate tools.
+For another release, select its actual launcher and expected version in a fresh
+build directory. Only the existing `vitis_hls -f` interface is implemented.
+Unified HLS releases may require changes for `vitis-run --mode hls --tcl`; see
+[AMD's command-line reference](https://docs.amd.com/r/en-US/ug1553-vitis-ide/vitis-run-Command).
+Passing a version check alone does not prove script or IP compatibility.
+
+Store repeatable personal paths in ignored `CMakeUserPresets.json` if desired;
+never commit local caches or personal absolute paths. The shared `hardware`
+preset is an optional alternative to explicit `-S`/`-B` commands.
+
+### 7. Linux equivalent
+
+The detailed walkthrough above uses Windows PowerShell. On Linux, use Bash,
+installed `cmake` and `ninja`, and the vendor environment appropriate to your
+installation. Do not paste PowerShell backticks or `$env:` syntax into Bash.
+From the repository root, a packaged-IP configuration is:
+
+```bash
+repo="$PWD"
+read -r -p 'Full path to the Vivado executable: ' vivado
+build="$repo/build/packaged-vivado"
+cmake -S "$repo" -B "$build" -G Ninja \
+  "-DSPIKEFACE_VIVADO_EXECUTABLE=$vivado" \
+  -DSPIKEFACE_ENABLE_HLS=OFF \
+  -DSPIKEFACE_USE_PACKAGED_IP=ON
+cmake --build "$build" --target vivado-bd
+```
+
+For a full HLS rebuild, use a separate directory and configure both executables:
+
+```bash
+read -r -p 'Full path to the vitis_hls executable: ' hls
+build="$repo/build/rebuilt-hardware"
+cmake -S "$repo" -B "$build" -G Ninja \
+  "-DSPIKEFACE_HLS_EXECUTABLE=$hls" \
+  "-DSPIKEFACE_VIVADO_EXECUTABLE=$vivado" \
+  -DSPIKEFACE_USE_PACKAGED_IP=OFF
+cmake --build "$build" --target hls-csim
+cmake --build "$build" --target hls-export
+cmake --build "$build" --target vivado-bd
+cmake --build "$build" --target vivado-bit
+```
+
+Run each build command only after the previous command succeeds.
+
+### 8. Troubleshooting
+
+| Message or symptom | Action |
+| --- | --- |
+| `cmake` or `ninja` is not recognized | Install the missing program, reopen the terminal, and check its version. |
+| `vitis_hls not found` or `vivado not found` | Pass the actual launcher using the corresponding `SPIKEFACE_*_EXECUTABLE` setting; check it with `Test-Path`. |
+| `expected 2022.2` | Select the 2022.2 executable, or intentionally configure another supported release and its expected version in a fresh build directory. |
+| Launcher exists but cannot query version | Run `& $vivado -version` or `& $hls -version` directly. If needed, open the vendor command shell and configure there. |
+| Need to load a Windows `.bat` environment | Open Command Prompt, run `call` followed by the quoted settings-file path, then run CMake in that same window. PowerShell commands/variables must be translated to cmd syntax. |
+| Missing board preset | Check `PL_Design/board_files/pynq-z2/A.0/board.xml`. Use a complete updated checkout. An older cache may have an empty/custom board path; use a fresh build folder or explicitly set the bundled directory. |
+| Missing `component.xml` | For route A enable packaged IPs in a fresh folder. For route B finish `hls-export`. Check for old explicit IP path overrides in the cache. |
+| Build appears slow | HLS synthesis/co-simulation and Vivado output-product generation can be lengthy. Inspect the printed log/project directory; use route A to skip rebuilding HLS. |
+| `vivado-bit` stops at timing or DRC | Inspect the reports in the printed run directory; resolve the hardware issue before deployment. |
+| Need to inspect a previous Vivado run | Each invocation preserves its own timestamped directory. Open that run's `.xpr`; a new invocation does not overwrite it. |
+| Configured the wrong folder or generator | Choose a fresh build directory and repeat configuration. Do not delete source or board files. |
+
+The owner reported a successful Windows 2022.2 `vivado-bd` run using the supplied
+IP archives and these board files. This does not establish complete HLS export,
+bitstream generation, timing closure, or board inference for every installation.
 
 ## Current model
 
